@@ -1,0 +1,56 @@
+services:
+  server:
+    build:
+      target: run
+      args:
+        SERVER_PORT: $SERVER_PORT
+    ports:
+      - "$SERVER_PORT:$SERVER_PORT"
+    environment:
+      CORS_ALLOWED_ORIGINS: '["http://localhost:$SERVER_PORT"]'
+      STORE_PHOTOS_PATH_FILE: "/run/secrets/store_photos_path"
+    secrets:
+      - initial_user
+      - auth_token_secret_key
+      - db_url
+      - store_photos_path
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - store_photos_path:/fitness_app/storage/store_photos
+
+  database:
+    image: postgres:16
+    healthcheck:
+      test: pg_isready -U $POSTGRES_USER -d $POSTGRES_DATABASE
+      interval: 3s
+      retries: 15
+      start_period: 5s
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: $POSTGRES_DATABASE
+      POSTGRES_USER_FILE: "/run/secrets/db_user"
+      POSTGRES_PASSWORD_FILE: "/run/secrets/db_password"
+    secrets:
+      - db_user
+      - db_password
+
+secrets:
+  auth_token_secret_key:
+    environment: AUTH_TOKEN_SECRET_KEY
+  initial_user:
+    environment: INITIAL_USER
+  db_url:
+    environment: DB_URL
+  db_user:
+    environment: POSTGRES_USER
+  db_password:
+    environment: POSTGRES_PASSWORD
+  store_photos_path:
+    environment: STORE_PHOTOS_PATH
+
+volumes:
+  db_data:
+  store_photos_path:
