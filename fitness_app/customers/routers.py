@@ -8,7 +8,7 @@ from fitness_app.coaches.models import Coach
 from fitness_app.core.dependencies import DbSession
 from fitness_app.customers.models import Customer
 
-customers_router = APIRouter(prefix="/coaches", tags=["Клиенты"])
+customers_router = APIRouter(prefix="/customers", tags=["Клиенты"])
 
 
 @customers_router.get(

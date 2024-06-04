@@ -6,7 +6,7 @@ from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
 from fitness_app.auth.permissions import Authenticated
 from fitness_app.core.dependencies import DbSession
 
-chats_router = APIRouter(prefix="/chats", tags=["Тренеры"])
+chats_router = APIRouter(prefix="/chats", tags=["Чаты"])
 
 
 @chats_router.get(
