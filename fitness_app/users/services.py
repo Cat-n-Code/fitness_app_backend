@@ -26,6 +26,8 @@ class UserService:
 
         user = User(**schema.model_dump(exclude=["password"], exclude_unset=True))
         user.password_hash = self._password_service.get_password_hash(schema.password)
+        user.coach_info = None
+        user.customer_info = None
         await self._user_repository.save(session, user)
 
         return user

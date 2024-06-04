@@ -11,7 +11,9 @@ from fitness_app.core.db_manager import DatabaseManager  # isort: split
 from fitness_app.auth.routers import auth_router
 from fitness_app.auth.services import AuthService, PasswordService, TokenService
 from fitness_app.chats.routers import chats_router
+from fitness_app.coaches.repositories import CoachRepository
 from fitness_app.coaches.routers import coaches_router
+from fitness_app.coaches.services import CoachService
 from fitness_app.core.exceptions import (
     AppException,
     handle_app_exception,
@@ -78,6 +80,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     app.state.database_manager = DatabaseManager(settings.db_url)
 
     user_repository = UserRepository()
+    coach_repository = CoachRepository()
 
     password_service = PasswordService()
     token_service = TokenService(
@@ -85,9 +88,11 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     )
     auth_service = AuthService(password_service, token_service, user_repository)
     user_service = UserService(password_service, user_repository)
+    coach_service = CoachService(coach_repository, user_repository, user_service)
 
     app.state.auth_service = auth_service
     app.state.user_service = user_service
+    app.state.coach_service = coach_service
 
 
 @asynccontextmanager
