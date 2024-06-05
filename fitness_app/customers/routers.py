@@ -3,54 +3,124 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path
 
 from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
-from fitness_app.auth.permissions import Authenticated
-from fitness_app.coaches.models import Coach
-from fitness_app.core.dependencies import DbSession
-from fitness_app.customers.models import Customer
+from fitness_app.auth.permissions import Authenticated, IsCustomer
+from fitness_app.coaches.schemas import CoachSchema
+from fitness_app.core.dependencies import CustomerServiceDep, DbSession
+from fitness_app.core.schemas import PageSchema
+from fitness_app.core.utils import PageField, SizeField
+from fitness_app.customers.schemas import (
+    CustomerCreateSchema,
+    CustomerSchema,
+    CustomerUpdateSchema,
+)
 
 customers_router = APIRouter(prefix="/customers", tags=["Клиенты"])
 
 
 @customers_router.get(
-    "/current",
-    response_model=None,
-    summary="Получить текущего авторизованного клиента",
-    dependencies=[Depends(HasPermission(Authenticated()))],
+    "/",
+    summary="Получить список всех клиентов",
+    response_model=PageSchema,
+    # dependencies=[Depends(HasPermission(Authenticated()))],
 )
-async def get_current_customer(user: AuthenticateUser) -> Customer:
-    return None
+async def get_all(
+    session: DbSession,
+    service: CustomerServiceDep,
+    page: PageField = 0,
+    size: SizeField = 10,
+):
+    customers = await service.get_all(session, page, size)
+    return PageSchema(
+        total_items_count=customers.total_items_count,
+        items=list(map(CustomerSchema.model_validate, customers.items)),
+    )
+
+
+@customers_router.post(
+    "/registration",
+    summary="Создать клиента",
+    response_model=CustomerSchema,
+    # dependencies=[Depends(HasPermission(Anonymous()))],
+)
+async def create(
+    session: DbSession,
+    service: CustomerServiceDep,
+    schema: CustomerCreateSchema,
+):
+    coach = await service.create(session, schema)
+    return CustomerSchema.model_validate(coach, from_attributes=True)
+
+
+@customers_router.get(
+    "/current",
+    summary="Получить текущего авторизованного клиента",
+    response_model=CustomerSchema,
+    dependencies=[Depends(HasPermission(IsCustomer()))],
+)
+async def get_current_customer(
+    service: CustomerServiceDep,
+    user: AuthenticateUser,
+):
+    customer = await service.get_current(user)
+    return CustomerSchema.model_validate(customer)
 
 
 @customers_router.put(
     "/current",
-    response_model=None,
+    response_model=CustomerSchema,
     summary="Обновить текущего авторизованного клиента",
-    dependencies=[Depends(HasPermission(Authenticated()))],
+    dependencies=[Depends(HasPermission(IsCustomer()))],
 )
 async def put_current_customer(
     user: AuthenticateUser,
+    service: CustomerServiceDep,
     session: DbSession,
-) -> Customer:
-    return None
+    schema: CustomerUpdateSchema,
+):
+    customer = await service.update_by_user(session, schema, user)
+    return CustomerSchema.model_validate(customer)
 
 
 @customers_router.get(
-    "/coach",
-    response_model=None,
-    summary="Получение своего тренера",
-    dependencies=[Depends(HasPermission(Authenticated()))],
+    "/my_coaches",
+    response_model=PageSchema,
+    summary="Получение своих тренеров",
+    dependencies=[Depends(HasPermission(IsCustomer()))],
 )
-async def get_coach(
+async def get_coaches(
     user: AuthenticateUser,
+    service: CustomerServiceDep,
     session: DbSession,
-) -> Coach:
-    return None
+    page: PageField = 0,
+    size: SizeField = 10,
+):
+    coaches = await service.get_coaches_by_user(session, user, page, size)
+    return PageSchema(
+        total_items_count=coaches.total_items_count,
+        items=coaches,
+    )
+
+
+@customers_router.post(
+    "/assign_me_coach/{coach_id}",
+    response_model=CoachSchema,
+    summary="Назначение тренера текущему клиенту",
+    dependencies=[Depends(HasPermission(IsCustomer()))],
+)
+async def assign_coach(
+    user: AuthenticateUser,
+    service: CustomerServiceDep,
+    session: DbSession,
+    coach_id: Annotated[int, Path],
+):
+    coach = await service.assign_coach(session, user, coach_id)
+    return CoachSchema.model_validate(coach)
 
 
 @customers_router.get(
     "/workouts",
     response_model=None,
-    summary="Получение своих тренеровок",
+    summary="Получение своих тренеровок (НЕ ГОТОВО)",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def get_workout(
@@ -63,54 +133,11 @@ async def get_workout(
 @customers_router.post(
     "/status",
     response_model=None,
-    summary="Изменение прогресса задания",
+    summary="Изменение прогресса задания (НЕ ГОТОВО)",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def set_exercise_status(
     user: AuthenticateUser,
     session: DbSession,
 ):
-    return None
-
-
-# Для тренера
-@customers_router.get(
-    "/own",
-    response_model=None,
-    summary="Получить список клиентов, относящихся к этому тренера",
-    dependencies=[Depends(HasPermission(Authenticated()))],
-)
-async def get_own_customers(
-    session: DbSession,
-    user: AuthenticateUser,
-) -> list[Customer]:
-    return None
-
-
-# Для тренера
-@customers_router.get(
-    "/free",
-    response_model=None,
-    summary="Получить список клиентов, не относящихся тренерам",
-    dependencies=[Depends(HasPermission(Authenticated()))],
-)
-async def get_free_customers(
-    session: DbSession,
-    user: AuthenticateUser,
-) -> list[Customer]:
-    return None
-
-
-# Для тренера
-@customers_router.post(
-    "/assign/{customer_id}",
-    response_model=None,
-    summary="Назначение клиента себе",
-    dependencies=[Depends(HasPermission(Authenticated()))],
-)
-async def assign_customers(
-    session: DbSession,
-    user: AuthenticateUser,
-    customer_id: Annotated[int, Path],
-) -> Customer:
     return None

@@ -20,7 +20,9 @@ from fitness_app.core.exceptions import (
     handle_validation_exception,
 )
 from fitness_app.core.settings import AppSettings
+from fitness_app.customers.repositories import CustomerRepository
 from fitness_app.customers.routers import customers_router
+from fitness_app.customers.services import CustomerService
 from fitness_app.exercises.routers import exercises_router
 from fitness_app.users.repositories import UserRepository
 from fitness_app.users.routers import users_router
@@ -81,6 +83,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
 
     user_repository = UserRepository()
     coach_repository = CoachRepository()
+    customer_repository = CustomerRepository()
 
     password_service = PasswordService()
     token_service = TokenService(
@@ -89,10 +92,14 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     auth_service = AuthService(password_service, token_service, user_repository)
     user_service = UserService(password_service, user_repository)
     coach_service = CoachService(coach_repository, user_repository, user_service)
+    customer_service = CustomerService(
+        customer_repository, user_repository, user_service
+    )
 
     app.state.auth_service = auth_service
     app.state.user_service = user_service
     app.state.coach_service = coach_service
+    app.state.customer_service = customer_service
 
 
 @asynccontextmanager
