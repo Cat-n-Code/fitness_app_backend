@@ -100,7 +100,7 @@ async def get_coaches(
 
 
 @coaches_router.post(
-    "/assign_me_customer/{coach_id}",
+    "/assign_me_customer/{customer_id}",
     response_model=CoachSchema,
     summary="Назначение клиента текущему тренеру",
     dependencies=[Depends(HasPermission(IsCoach()))],
@@ -112,4 +112,20 @@ async def assign_coach(
     customer_id: IdField,
 ):
     coach = await service.assign_customer(session, user, customer_id)
+    return CoachSchema.model_validate(coach)
+
+
+@coaches_router.post(
+    "/unassign_my_customer/{customer_id}",
+    response_model=CoachSchema,
+    summary="Отвязка текущего тренера от клиента",
+    dependencies=[Depends(HasPermission(IsCoach()))],
+)
+async def unassign_coach(
+    user: AuthenticateUser,
+    service: CoachServiceDep,
+    session: DbSession,
+    customer_id: IdField,
+):
+    coach = await service.unassign_customer(session, user, customer_id)
     return CoachSchema.model_validate(coach)

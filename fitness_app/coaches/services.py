@@ -10,6 +10,7 @@ from fitness_app.coaches.schemas import (
 from fitness_app.core.exceptions import EntityNotFoundException
 from fitness_app.core.schemas import PageSchema
 from fitness_app.core.utils import update_model_by_schema
+from fitness_app.customers.models import Customer
 from fitness_app.customers.schemas import CustomerSchema
 from fitness_app.users.models import User
 from fitness_app.users.repositories import UserRepository
@@ -111,8 +112,21 @@ class CoachService:
     async def assign_customer(
         self, session: AsyncSession, user: User, customer_id: int
     ):
-        coach_id = user.customer_info.id
+        coach_id = user.coach_info.id
+        if await session.get(Customer, customer_id) is None:
+            raise EntityNotFoundException("Customer with given id was not found")
         coach = await self._user_repository.assign_coach_custoemer(
+            session=session, coach_id=coach_id, customer_id=customer_id
+        )
+        return coach
+
+    async def unassign_customer(
+        self, session: AsyncSession, user: User, customer_id: int
+    ):
+        coach_id = user.coach_info.id
+        if await session.get(Customer, customer_id) is None:
+            raise EntityNotFoundException("Customer with given id was not found")
+        coach = await self._user_repository.unassign_coach_custoemer(
             session=session, coach_id=coach_id, customer_id=customer_id
         )
         return coach

@@ -48,7 +48,7 @@ class UserRepository:
             .where(CoachesCustomers.customer_id == customer_id)
             .where(CoachesCustomers.coach_id == coach_id)
         )
-        if existing_relationship.scalar_one_or_none():
+        if existing_relationship.scalar_one_or_none() is not None:
             raise EntityAlreadyExistsException(
                 "coach already assigned to to this customer"
             )
@@ -75,6 +75,43 @@ class UserRepository:
 
         if customer not in coach.customers:
             coach.customers.append(customer)
+        await session.commit()
+        return coach
+
+    async def unassign_coach_custoemer(
+        self, session: AsyncSession, customer_id: int, coach_id: int
+    ) -> Coach:
+        existing_relationship = await session.execute(
+            select(CoachesCustomers)
+            .where(CoachesCustomers.customer_id == customer_id)
+            .where(CoachesCustomers.coach_id == coach_id)
+        )
+        if existing_relationship.scalar_one_or_none() is None:
+            raise EntityAlreadyExistsException(
+                "coach is not assigned to to this customer yet"
+            )
+        customer_statement = (
+            select(Customer)
+            .where(Customer.id == customer_id)
+            .options(selectinload(Customer.coaches))
+        )
+        customer_result = await session.execute(customer_statement)
+        customer = customer_result.scalar_one()
+        coach_statement = (
+            select(Coach)
+            .where(Coach.id == coach_id)
+            .options(selectinload(Coach.customers))
+        )
+
+        coach_result = await session.execute(coach_statement)
+
+        coach = coach_result.scalar_one()
+
+        if coach in customer.coaches:
+            customer.coaches.remove(coach)
+
+        if customer in coach.customers:
+            coach.customers.remove(customer)
         await session.commit()
         return coach
 
