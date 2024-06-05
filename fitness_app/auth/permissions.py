@@ -16,3 +16,13 @@ class Anonymous(BasePermission):
 class Authenticated(BasePermission):
     def has_permission(self, user: User | None) -> bool:
         return user is not None
+
+
+class IsCustomer(BasePermission):
+    def has_permission(self, user: User | None) -> bool:
+        return user is not None and user.role == "CUSTOMER"
+
+
+class IsCoach(BasePermission):
+    def has_permission(self, user: User | None) -> bool:
+        return user is not None and user.role == "COACH"

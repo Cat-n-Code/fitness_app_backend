@@ -19,4 +19,6 @@ class Coach(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="coach_info")
-    customers: Mapped[list["Customer"]] = relationship(back_populates="coach")
+    customers: Mapped[list["Customer"]] = relationship(
+        "Customer", back_populates="coaches", secondary="coaches_customers"
+    )

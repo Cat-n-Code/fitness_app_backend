@@ -1,9 +1,11 @@
-from typing import TYPE_CHECKING
+from datetime import date
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fitness_app.core.db_manager import Base
+from fitness_app.customers.schemas import ExercisePreference, FitnessLevel, UserGoal
 
 if TYPE_CHECKING:
     from fitness_app.coaches.models import Coach
@@ -14,9 +16,14 @@ class Customer(Base):
     __tablename__ = "customers"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(nullable=False)
+    goal: Mapped[Optional[UserGoal]]
+    birth_date: Mapped[Optional[date]]
+    fitness_level: Mapped[Optional[FitnessLevel]]
+    preference: Mapped[Optional[ExercisePreference]]
+
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     user: Mapped["User"] = relationship(back_populates="customer_info")
 
-    coach_id: Mapped[int] = mapped_column(ForeignKey("coaches.id"), nullable=False)
-    coach: Mapped["Coach"] = relationship(back_populates="customers")
+    coaches: Mapped[list["Coach"]] = relationship(
+        "Coach", back_populates="customers", secondary="coaches_customers"
+    )
