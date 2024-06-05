@@ -5,6 +5,7 @@ from fitness_app.core.exceptions import (
     EntityAlreadyExistsException,
     EntityNotFoundException,
 )
+from fitness_app.core.schemas import PageSchema
 from fitness_app.core.utils import update_model_by_schema
 from fitness_app.users.models import User
 from fitness_app.users.repositories import UserRepository
@@ -19,6 +20,22 @@ class UserService:
     ):
         self._password_service = password_service
         self._user_repository = user_repository
+
+    async def get_all(
+        self,
+        session: AsyncSession,
+        page: int,
+        size: int,
+    ):
+        total_products_count = await self._user_repository.count_all(
+            session,
+        )
+        users = await self._user_repository.get_all(
+            session,
+            page,
+            size,
+        )
+        return PageSchema(total_items_count=total_products_count, items=users)
 
     async def create(self, session: AsyncSession, schema: UserCreateSchema):
         if await self._user_repository.exists_by_email(session, schema.email):
