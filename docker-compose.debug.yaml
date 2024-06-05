@@ -1,7 +1,7 @@
 services:
   server:
     build:
-      target: dev
+      target: debug
     ports:
       - "5678:5678"
     volumes:
