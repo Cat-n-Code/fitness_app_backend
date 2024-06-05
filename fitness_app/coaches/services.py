@@ -4,11 +4,13 @@ from fitness_app.coaches.models import Coach
 from fitness_app.coaches.repositories import CoachRepository
 from fitness_app.coaches.schemas import (
     CoachCreateSchema,
-    CoachSaveSchema,
+    CoachSchema,
     CoachUpdateSchema,
 )
 from fitness_app.core.exceptions import EntityNotFoundException
+from fitness_app.core.schemas import PageSchema
 from fitness_app.core.utils import update_model_by_schema
+from fitness_app.customers.schemas import CustomerSchema
 from fitness_app.users.models import User
 from fitness_app.users.repositories import UserRepository
 from fitness_app.users.schemas import UserCreateSchema
@@ -27,23 +29,32 @@ class CoachService:
         self._user_service = user_service
 
     async def create(self, session: AsyncSession, schema: CoachCreateSchema):
-        userSchema = UserCreateSchema(**schema.model_dump(exclude=["speciality"]))
+        userSchema = UserCreateSchema(**schema.model_dump())
 
         saved_user = await self._user_service.create(session, userSchema)
-        coachSchema = CoachSaveSchema(
-            speciality=schema.speciality,
-            user_id=saved_user.id,
-        )
+        coachSchema = CoachSchema.model_construct(**schema.model_dump())
         coach = Coach(**coachSchema.model_dump())
+        setattr(coach, "user_id", saved_user.id)
         setattr(coach, "user", saved_user)
         setattr(coach, "customers", [])
+        setattr(saved_user, "role", "COACH")
         setattr(saved_user, "coach_info", coach)
         self._user_repository.save(session, saved_user)
-        print("user:", saved_user.coach_info)
         return await self._coach_repository.save(session, coach)
 
+    async def get_all(
+        self,
+        session: AsyncSession,
+        page: int,
+        size: int,
+    ):
+        total_products_count = await self._coach_repository.count_all(
+            session,
+        )
+        coaches = await self._coach_repository.get_all(session, page, size)
+        return PageSchema(total_items_count=total_products_count, items=coaches)
+
     async def get_current(self, user: User):
-        print("user:", user)
         if user is None:
             raise EntityNotFoundException("User with given id was not found")
         if user.coach_info is None:
@@ -76,6 +87,35 @@ class CoachService:
         update_model_by_schema(coach, schema)
 
         return await self._coach_repository.save(session, coach)
+
+    async def get_customers_by_user(
+        self,
+        session: AsyncSession,
+        user: User,
+        page: int,
+        size: int,
+    ):
+        if user.coach_info is None:
+            raise EntityNotFoundException("User with given id is not a coach")
+        own_coaches_count = await self._coach_repository.count_coaches_by_user_id(
+            session, user.coach_info.id
+        )
+        coaches = await self._coach_repository.get_coaches_by_id(
+            session, user.coach_info.id, page, size
+        )
+        return PageSchema(
+            total_items_count=own_coaches_count,
+            items=list(map(CustomerSchema.model_validate, coaches)),
+        )
+
+    async def assign_customer(
+        self, session: AsyncSession, user: User, customer_id: int
+    ):
+        coach_id = user.customer_info.id
+        coach = await self._user_repository.assign_coach_custoemer(
+            session=session, coach_id=coach_id, customer_id=customer_id
+        )
+        return coach
 
     async def delete_by_id(self, session: AsyncSession, coach_id: int):
         coach = await session.get(Coach, coach_id)

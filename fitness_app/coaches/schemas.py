@@ -11,24 +11,24 @@ class Speciality(StrEnum):
     YOGA = "YOGA"
 
 
-class CoachSchema(BaseModel):
+class CoachBaseSchema(BaseModel):
+    speciality: Speciality
+
+
+class CoachCreateSchema(UserCreateSchema, CoachBaseSchema):
+    pass
+
+
+class CoachUpdateSchema(CoachBaseSchema):
+    pass
+
+
+class CoachSaveSchema(CoachBaseSchema):
     model_config = ConfigDict(from_attributes=True)
+
+    user_id: int
+
+
+class CoachSchema(CoachSaveSchema):
 
     id: int
-    speciality: Speciality
-    user_id: int
-
-
-class CoachCreateSchema(UserCreateSchema):
-    speciality: Speciality
-
-
-class CoachUpdateSchema(BaseModel):
-    speciality: Speciality
-
-
-class CoachSaveSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    speciality: Speciality
-    user_id: int
