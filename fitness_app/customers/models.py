@@ -1,4 +1,3 @@
-from datetime import date
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import ForeignKey
@@ -17,7 +16,6 @@ class Customer(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     goal: Mapped[Optional[UserGoal]]
-    birth_date: Mapped[Optional[date]]
     fitness_level: Mapped[Optional[FitnessLevel]]
     preference: Mapped[Optional[ExercisePreference]]
 
