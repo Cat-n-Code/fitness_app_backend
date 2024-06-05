@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from fitness_app.coaches.models import Coach
 from fitness_app.coaches.schemas import CoachSchema
 from fitness_app.core.exceptions import EntityNotFoundException
 from fitness_app.core.schemas import PageSchema
@@ -92,6 +93,15 @@ class CustomerService:
         customer_id = user.customer_info.id
         coach = await self._user_repository.assign_coach_custoemer(
             session=session, customer_id=customer_id, coach_id=coach_id
+        )
+        return coach
+
+    async def unassign_coach(self, session: AsyncSession, user: User, coach_id: int):
+        customer_id = user.customer_info.id
+        if await session.get(Coach, customer_id) is None:
+            raise EntityNotFoundException("Coach with given id was not found")
+        coach = await self._user_repository.unassign_coach_custoemer(
+            session=session, coach_id=coach_id, customer_id=customer_id
         )
         return coach
 

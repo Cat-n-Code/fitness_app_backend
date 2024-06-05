@@ -117,6 +117,22 @@ async def assign_coach(
     return CoachSchema.model_validate(coach)
 
 
+@customers_router.post(
+    "/unassign_me_coach/{coach_id}",
+    response_model=CoachSchema,
+    summary="Отвязка текущего клиента от тренера",
+    dependencies=[Depends(HasPermission(IsCustomer()))],
+)
+async def unassign_coach(
+    user: AuthenticateUser,
+    service: CustomerServiceDep,
+    session: DbSession,
+    coach_id: Annotated[int, Path],
+):
+    coach = await service.unassign_coach(session, user, coach_id)
+    return CoachSchema.model_validate(coach)
+
+
 @customers_router.get(
     "/workouts",
     response_model=None,
