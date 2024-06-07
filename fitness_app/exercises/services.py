@@ -8,7 +8,6 @@ from fitness_app.core.utils import update_model_by_schema
 from fitness_app.exercises.models import Exercise
 from fitness_app.exercises.repositories import ExerciseRepository
 from fitness_app.exercises.schemas import ExerciseCreateSchema, ExerciseUpdateSchema
-from fitness_app.file_entities.models import FileEntity
 from fitness_app.file_entities.services import FileEntityService
 from fitness_app.users.models import User
 
@@ -33,15 +32,15 @@ class ExerciseService:
         exercise.user_id = user.id
         exercise = await self._exercise_repository.save(session, exercise)
 
-        if photos is not None:
-            for i in range(len(photos)):
-                await self._file_entity_service.create(session, photos[i], exercise.id)
+        if photos:
+            for photo in photos:
+                await self._file_entity_service.create(session, photo, exercise.id)
 
         return await self._exercise_repository.get_by_id(session, exercise.id)
 
     async def get_by_id(self, session: AsyncSession, id: int):
         exercise = await self._exercise_repository.get_by_id(session, id)
-        if exercise is None:
+        if not exercise:
             raise EntityNotFoundException("Упражнения с указанным id не найдено")
         return exercise
 
@@ -51,7 +50,7 @@ class ExerciseService:
         exercises = await self._exercise_repository.get_by_user_id(
             session, user_id, page, size
         )
-        if exercises == []:
+        if not exercises:
             raise EntityNotFoundException("Упражнения с указанным id не найдено")
         return exercises
 
@@ -64,29 +63,26 @@ class ExerciseService:
         exercise = await self._exercise_repository.get_by_id(session, schema.id)
         if not exercise:
             raise EntityNotFoundException("Упражнения с указанным id не найдено")
+
         update_model_by_schema(exercise, schema)
         exercise = await self._exercise_repository.save(session, exercise)
 
         if exercise.photos:
             for photo in exercise.photos:
                 await self._file_entity_service.delete_by_id(session, photo.id)
-            exercise.photos = []
         if photos:
-            upload_photos = [FileEntity()] * len(photos)
-            for i in range(len(photos)):
-                upload_photos[i] = await self._file_entity_service.create(
-                    session, photos[i], exercise.id
-                )
-            exercise.photos = upload_photos
+            for photo in photos:
+                await self._file_entity_service.create(session, photo, exercise.id)
 
+        await session.refresh(exercise)
         return exercise
 
     async def delete_by_id(self, session: AsyncSession, id: int):
         exercise = await self._exercise_repository.get_by_id(session, id)
-        if exercise is None:
+        if not exercise:
             raise EntityNotFoundException("Упражнения с указанным id не найдено")
 
-        if exercise.photos is not None:
+        if exercise.photos:
             for i in range(len(exercise.photos)):
                 await self._file_entity_service.delete_by_id(
                     session, exercise.photos[i].id

@@ -1,7 +1,6 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, status
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, status
 
-from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
+from fitness_app.auth.dependencies import HasPermission
 from fitness_app.auth.permissions import Authenticated
 from fitness_app.core.dependencies import DbSession, FileEntityServiceDep
 

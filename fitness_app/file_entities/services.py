@@ -1,18 +1,12 @@
 import os
 import uuid
-from tempfile import NamedTemporaryFile
 
 import boto3
 from botocore.exceptions import ClientError
-from fastapi import BackgroundTasks, UploadFile
-from fastapi.responses import FileResponse
+from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fitness_app.core.exceptions import (
-    EntityNotFoundException,
-    ForbiddenException,
-    InternalServerError,
-)
+from fitness_app.core.exceptions import EntityNotFoundException, InternalServerError
 from fitness_app.file_entities.models import FileEntity
 from fitness_app.file_entities.repositories import FileEntityRepository
 
@@ -74,8 +68,9 @@ class FileEntityService:
 
     async def delete_by_id(self, session: AsyncSession, id: int):
         file_entity = await self._file_entity_repository.get_by_id(session, id)
-        if file_entity is None:
+        if not file_entity:
             raise EntityNotFoundException("FileEntity with given id was not found")
+
         try:
             self._s3_client.delete_object(
                 Bucket=self._bucket_name, Key=file_entity.filename
