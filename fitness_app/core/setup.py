@@ -121,8 +121,9 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     customer_service = CustomerService(
         customer_repository, user_repository, user_service
     )
-
     exercise_service = ExerciseService(exercise_repository, file_entity_service)
+    chat_service = ChatService(chat_repository, user_service)
+    message_service = MessageService(message_repository, chat_service)
     chat_service = ChatService(chat_repository, user_service)
     message_service = MessageService(message_repository, chat_service)
 
