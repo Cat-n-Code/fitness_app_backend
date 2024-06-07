@@ -2,6 +2,7 @@ from sqlalchemy import exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
+from fitness_app.chats.models import Chat
 from fitness_app.coaches.models import Coach
 from fitness_app.core.exceptions import EntityAlreadyExistsException
 from fitness_app.customers.models import Customer
@@ -52,11 +53,10 @@ class UserRepository:
             raise EntityAlreadyExistsException(
                 "coach already assigned to to this customer"
             )
-
         customer_statement = (
             select(Customer)
             .where(Customer.id == customer_id)
-            .options(selectinload(Customer.coaches))
+            .options(selectinload(Customer.coaches), joinedload(Customer.user))
         )
 
         customer_result = await session.execute(customer_statement)
@@ -64,7 +64,7 @@ class UserRepository:
         coach_statement = (
             select(Coach)
             .where(Coach.id == coach_id)
-            .options(selectinload(Coach.customers))
+            .options(selectinload(Coach.customers), joinedload(Coach.user))
         )
         coach_result = await session.execute(coach_statement)
 
@@ -75,6 +75,11 @@ class UserRepository:
 
         if customer not in coach.customers:
             coach.customers.append(customer)
+        chat = Chat()
+        users = [customer.user, coach.user]
+        setattr(chat, "users", users)
+        setattr(chat, "messages", [])
+        session.add(chat)
         await session.commit()
         return coach
 
