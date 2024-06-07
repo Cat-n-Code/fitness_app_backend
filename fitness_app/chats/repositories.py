@@ -35,7 +35,7 @@ class ChatRepository:
             select(func.count(Chat.id))
             .select_from(User)
             .join(User.chats)
-            .where(User.id == user_id)
+            .where(User.id == user_id and Chat.type == "DIALOGUE")
         )
         result = await session.execute(statement)
         return result.scalar_one()
@@ -49,7 +49,8 @@ class ChatRepository:
     ):
         statement = (
             select(Chat)
-            .where(User.id == user_id)
+            .join(Chat.users)
+            .where(User.id == user_id and Chat.type == "DIALOGUE")
             .order_by(Chat.last_timestamp.desc())
             .offset(page * size)
             .limit(size)

@@ -3,28 +3,11 @@ from fastapi import APIRouter, Depends
 from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
 from fitness_app.auth.permissions import Authenticated
 from fitness_app.chats.schemas import ChatSchema
-from fitness_app.coaches.schemas import CoachCreateSchema
 from fitness_app.core.dependencies import ChatServiceDep, DbSession
 from fitness_app.core.schemas import PageSchema
 from fitness_app.core.utils import IdField, PageField, SizeField
 
 chats_router = APIRouter(prefix="/chats", tags=["Чаты"])
-
-
-@chats_router.post(
-    "/",
-    response_model=ChatSchema,
-    summary="Создание чата",
-    dependencies=[Depends(HasPermission(Authenticated()))],
-)
-async def create(
-    session: DbSession,
-    service: ChatServiceDep,
-    user: AuthenticateUser,
-    schema: CoachCreateSchema,
-):
-    chat = await service.create(session, service)
-    return ChatSchema.model_validate(chat)
 
 
 @chats_router.get(
