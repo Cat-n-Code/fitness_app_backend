@@ -30,7 +30,7 @@ class ExerciseService:
         user: User,
     ):
         exercise = Exercise(**schema.model_dump())
-        exercise.users = [user]
+        exercise.user_id = user.id
         exercise = await self._exercise_repository.save(session, exercise)
 
         if photos is not None:

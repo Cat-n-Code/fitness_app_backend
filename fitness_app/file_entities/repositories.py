@@ -2,7 +2,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from fitness_app.exercises.models import Exercise
 from fitness_app.file_entities.models import FileEntity
 
 
@@ -22,7 +21,7 @@ class FileEntityRepository:
         statement = (
             select(FileEntity)
             .where(FileEntity.filename == filename)
-            .options(joinedload(FileEntity.exercise).selectinload(Exercise.users))
+            .options(joinedload(FileEntity.exercise))
         )
         result = await session.execute(statement)
         return result.scalar_one_or_none()

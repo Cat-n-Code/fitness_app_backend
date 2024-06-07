@@ -6,7 +6,7 @@ import os
 
 import requests
 
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTc3MTMwNTcsInVzZXJfaWQiOjF9.EGDtjKeHzoAHVknRS6zwu5VaCSS67SMgVrCIEse7QqM"
+token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTc3NjIwMzgsInVzZXJfaWQiOjF9.Pi9w-pj7-obiq78W9UgUXHUgnlE6A4c6ECgKKjiNxus"
 headers = {"Authorization": f"Bearer {token}"}
 url = "http://localhost:8080/exercises/"
 
@@ -30,5 +30,8 @@ for i in range(len(payload)):
     schema = {"schema": schema_data}
 
     response = requests.post(url, data=schema, files=photos, headers=headers)
-    print(response.status_code)
-    print(response.json())
+
+    # The loading indicator
+    if i % 25 == 0:
+        print(response.status_code)
+        print(response.json())

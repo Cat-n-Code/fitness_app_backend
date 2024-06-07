@@ -1,8 +1,8 @@
-from sqlalchemy import select
+from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from fitness_app.exercises.models import Exercise, UserExercises
+from fitness_app.exercises.models import Exercise
 
 
 class ExerciseRepository:
@@ -26,10 +26,11 @@ class ExerciseRepository:
     ):
         statement = (
             select(Exercise)
-            .join(UserExercises, Exercise.id == UserExercises.exercise_id)
-            .filter(UserExercises.user_id == user_id)
+            # should be == None
+            .where(or_(Exercise.user_id == None, Exercise.user_id == user_id))
             .offset(page * size)
             .limit(size)
+            .order_by(desc(Exercise.id))
             .options(selectinload(Exercise.photos))
         )
         result = await session.execute(statement)

@@ -21,9 +21,7 @@ class User(Base):
     birth_date: Mapped[Optional[date]] = mapped_column(nullable=True)
     password_hash: Mapped[str] = mapped_column(nullable=False)
 
-    exercises: Mapped[list["Exercise"]] = relationship(
-        secondary="user_exercises", back_populates="users"
-    )
+    exercises: Mapped[list["Exercise"]] = relationship(back_populates="user")
 
     role: Mapped[Role] = mapped_column(
         server_default="CUSTOMER", default="CUSTOMER", nullable=False
