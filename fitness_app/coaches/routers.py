@@ -34,6 +34,21 @@ async def get_all(
     )
 
 
+@coaches_router.get(
+    "/id/{user_id}",
+    summary="Получить тренера по customer_id",
+    response_model=CoachSchema,
+    # dependencies=[Depends(HasPermission(Authenticated()))],
+)
+async def get(
+    session: DbSession,
+    service: CoachServiceDep,
+    user_id: IdField,
+):
+    user = await service.get_by_id(session, user_id)
+    return CoachSchema.model_validate(user)
+
+
 @coaches_router.post(
     "/registration",
     summary="Создать тренера",
