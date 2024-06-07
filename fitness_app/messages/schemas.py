@@ -7,6 +7,7 @@ from fitness_app.core.utils import NonEmptyStr
 
 class MessageCreateSchema(BaseModel):
     content: NonEmptyStr
+    files: list[str] = []
 
 
 class MessageBaseSchema(MessageCreateSchema):

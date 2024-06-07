@@ -29,12 +29,14 @@ class ChatService:
         users: list,
         type: ChatType = "DIALOGUE",
     ):
-        chat_create_schema = ChatCreateSchema(type)
-        chat = Chat(**chat_create_schema.model_dump())
-        chat.users = users
-        chat.messages = []
+        if await self.get_by_user_id(session, users[0], users[1].id) is None:
+            chat_create_schema = ChatCreateSchema(type=type)
+            chat = Chat(**chat_create_schema.model_dump())
+            chat.users = users
+            chat.messages = []
 
-        return await self._chat_repository.save(session, chat)
+            return await self._chat_repository.save(session, chat)
+        return await self.get_by_user_id(session, users[0], users[1].id)
 
     async def get_by_chat_id(self, session: AsyncSession, user: User, chat_id: int):
         chat = await self._chat_repository.get_with_users_by_chat_id(session, chat_id)

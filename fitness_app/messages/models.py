@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, func
+from sqlalchemy import ARRAY, ForeignKey, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fitness_app.core.db_manager import Base
@@ -20,6 +20,7 @@ class Message(Base):
     timestamp: Mapped[datetime] = mapped_column(
         default=datetime.now, server_default=func.now()
     )
+    files: Mapped[list[str]] = mapped_column(ARRAY(Text))
 
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"))
     sender_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
