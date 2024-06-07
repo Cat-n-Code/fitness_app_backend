@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from fitness_app.chats.schemas import ChatType
 from fitness_app.core.db_manager import Base
 from fitness_app.users.models import User
 
@@ -22,6 +23,7 @@ class Chat(Base):
         "User", back_populates="chats", secondary="chats_users"
     )
     messages: Mapped[list["Message"]] = relationship("Message", back_populates="chat")
+    type: Mapped[ChatType]
 
 
 class ChatsUsers(Base):

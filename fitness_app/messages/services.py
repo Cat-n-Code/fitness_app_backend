@@ -40,11 +40,18 @@ class MessageService:
         session: AsyncSession,
         user: User,
         create_schema: MessageCreateSchema,
+        chat_id: int,
     ):
-        await self._chat_service.is_accessed_chat(session, user, create_schema.chat_id)
-        chat = await session.get(Chat, create_schema.chat_id)
+        await self._chat_service.is_accessed_chat(
+            session,
+            user,
+            chat_id,
+        )
+        chat = await session.get(Chat, chat_id)
         create_schema_dict = create_schema.model_dump()
         create_schema_dict["sender_id"] = user.id
+        create_schema_dict["chat_id"] = chat_id
+
         messageSchema = MessageBaseSchema(**create_schema_dict)
         message = Message(**messageSchema.model_dump())
         saved_message = await self._message_repository.save(session, message)

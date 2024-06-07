@@ -40,8 +40,9 @@ async def get_all(
 async def send(
     session: DbSession,
     service: MessageServiceDep,
+    chat_id: IdField,
     user: AuthenticateUser,
     schema: MessageCreateSchema,
 ):
-    message = await service.create(session, user, schema)
+    message = await service.create(session, user, schema, chat_id)
     return MessageSchema.model_validate(message)

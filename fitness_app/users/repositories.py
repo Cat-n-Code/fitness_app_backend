@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from fitness_app.chats.models import Chat
+from fitness_app.chats.schemas import ChatCreateSchema
 from fitness_app.coaches.models import Coach
 from fitness_app.core.exceptions import EntityAlreadyExistsException
 from fitness_app.customers.models import Customer
@@ -75,10 +76,11 @@ class UserRepository:
 
         if customer not in coach.customers:
             coach.customers.append(customer)
-        chat = Chat()
         users = [customer.user, coach.user]
-        setattr(chat, "users", users)
-        setattr(chat, "messages", [])
+        chat_create_schema = ChatCreateSchema(type="DIALOGUE")
+        chat = Chat(**chat_create_schema.model_dump())
+        chat.users = users
+        chat.messages = []
         session.add(chat)
         await session.commit()
         return coach
