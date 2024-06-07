@@ -24,14 +24,16 @@ class ExerciseRepository:
     async def get_by_user_id(
         self, session: AsyncSession, user_id: int, page: int, size: int
     ):
-        result = await session.execute(
+        statement = (
             select(Exercise)
-            .where(or_(Exercise.user_id is None, Exercise.user_id == user_id))
+            # should be == None
+            .where(or_(Exercise.user_id == None, Exercise.user_id == user_id))
             .offset(page * size)
             .limit(size)
             .order_by(desc(Exercise.id))
             .options(selectinload(Exercise.photos))
         )
+        result = await session.execute(statement)
         return result.scalars().all()
 
     async def delete(self, session: AsyncSession, exercise: Exercise):

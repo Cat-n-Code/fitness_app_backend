@@ -2,7 +2,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from fitness_app.exercises.models import Exercise
 from fitness_app.file_entities.models import FileEntity
 
 
