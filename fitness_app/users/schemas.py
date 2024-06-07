@@ -7,6 +7,11 @@ from pydantic import BaseModel, ConfigDict, EmailStr
 from fitness_app.core.utils import NonEmptyStr
 
 
+class Role(StrEnum):
+    COACH = "COACH"
+    CUSTOMER = "CUSTOMER"
+
+
 class Sex(StrEnum):
     MALE = "MALE"
     FEMALE = "FEMALE"
@@ -25,7 +30,7 @@ class UserCreateSchema(UserBaseSchema):
 
 class UserSchema(UserBaseSchema):
     model_config = ConfigDict(from_attributes=True)
-
+    role: Role = "CUSTOMER"
     id: int
 
 

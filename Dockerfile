@@ -30,3 +30,10 @@ FROM install AS debug
 RUN $POETRY_HOME/bin/poetry add debugpy
 
 ENTRYPOINT [ "sh", "-c", "$POETRY_HOME/bin/poetry run python -m debugpy --wait-for-client --listen 0.0.0.0:5678 -m uvicorn --host 0.0.0.0 --port $SERVER_PORT --reload fitness_app.main:app" ]
+
+
+# Dev stage
+FROM install AS Dev
+
+ENTRYPOINT [ "sh", "-c", "$POETRY_HOME/bin/poetry run uvicorn --host 0.0.0.0 --port $SERVER_PORT --reload fitness_app.main:app" ]
+

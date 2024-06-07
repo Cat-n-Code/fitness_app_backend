@@ -1,7 +1,11 @@
 from sqlalchemy import exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload, selectinload
 
-from fitness_app.users.models import User
+from fitness_app.coaches.models import Coach
+from fitness_app.core.exceptions import EntityAlreadyExistsException
+from fitness_app.customers.models import Customer
+from fitness_app.users.models import CoachesCustomers, User
 
 
 class UserRepository:
@@ -10,14 +14,11 @@ class UserRepository:
         statement = (
             select(User)
             .where(User.id == id)
-            .options(
-                # joinedload(User.coach_info),
-                # joinedload(User.customer_info),
-            )
+            .options(joinedload(User.coach_info), joinedload(User.customer_info))
         )
 
         result = await session.execute(statement)
-        return result.scalar_one()
+        return result.scalar_one_or_none()
 
     async def get_by_email(self, session: AsyncSession, email: str):
         statement = select(User).where(User.email == email)
@@ -38,6 +39,81 @@ class UserRepository:
         statement = select(func.count()).select_from(User)
         result = await session.execute(statement)
         return result.scalar_one()
+
+    async def assign_coach_custoemer(
+        self, session: AsyncSession, customer_id: int, coach_id: int
+    ) -> Coach:
+        existing_relationship = await session.execute(
+            select(CoachesCustomers)
+            .where(CoachesCustomers.customer_id == customer_id)
+            .where(CoachesCustomers.coach_id == coach_id)
+        )
+        if existing_relationship.scalar_one_or_none() is not None:
+            raise EntityAlreadyExistsException(
+                "coach already assigned to to this customer"
+            )
+
+        customer_statement = (
+            select(Customer)
+            .where(Customer.id == customer_id)
+            .options(selectinload(Customer.coaches))
+        )
+
+        customer_result = await session.execute(customer_statement)
+        customer = customer_result.scalar_one()
+        coach_statement = (
+            select(Coach)
+            .where(Coach.id == coach_id)
+            .options(selectinload(Coach.customers))
+        )
+        coach_result = await session.execute(coach_statement)
+
+        coach = coach_result.scalar_one()
+
+        if coach not in customer.coaches:
+            customer.coaches.append(coach)
+
+        if customer not in coach.customers:
+            coach.customers.append(customer)
+        await session.commit()
+        return coach
+
+    async def unassign_coach_custoemer(
+        self, session: AsyncSession, customer_id: int, coach_id: int
+    ) -> Coach:
+        existing_relationship = await session.execute(
+            select(CoachesCustomers)
+            .where(CoachesCustomers.customer_id == customer_id)
+            .where(CoachesCustomers.coach_id == coach_id)
+        )
+        if existing_relationship.scalar_one_or_none() is None:
+            raise EntityAlreadyExistsException(
+                "coach is not assigned to to this customer yet"
+            )
+        customer_statement = (
+            select(Customer)
+            .where(Customer.id == customer_id)
+            .options(selectinload(Customer.coaches))
+        )
+        customer_result = await session.execute(customer_statement)
+        customer = customer_result.scalar_one()
+        coach_statement = (
+            select(Coach)
+            .where(Coach.id == coach_id)
+            .options(selectinload(Coach.customers))
+        )
+
+        coach_result = await session.execute(coach_statement)
+
+        coach = coach_result.scalar_one()
+
+        if coach in customer.coaches:
+            customer.coaches.remove(coach)
+
+        if customer in coach.customers:
+            coach.customers.remove(customer)
+        await session.commit()
+        return coach
 
     async def save(self, session: AsyncSession, user: User):
         session.add(user)
