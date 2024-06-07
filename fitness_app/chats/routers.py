@@ -31,16 +31,32 @@ async def get_all(
 
 
 @chats_router.get(
-    "/get/{chat_id}",
+    "/chat/{chat_id}",
     response_model=ChatSchema,
     summary="Получение чата по id",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
-async def get_chat(
+async def get_by_chat_id(
     session: DbSession,
     service: ChatServiceDep,
     user: AuthenticateUser,
     chat_id: IdField,
 ):
-    chat = await service.get_chat(session, user, chat_id)
+    chat = await service.get_by_chat_id(session, user, chat_id)
+    return ChatSchema.model_validate(chat)
+
+
+@chats_router.get(
+    "/user/{user_id}",
+    response_model=ChatSchema,
+    summary="Получение чата по id второго пользователя",
+    dependencies=[Depends(HasPermission(Authenticated()))],
+)
+async def get_by_user_id(
+    session: DbSession,
+    service: ChatServiceDep,
+    user: AuthenticateUser,
+    user_id: IdField,
+):
+    chat = await service.get_by_user_id(session, user, user_id)
     return ChatSchema.model_validate(chat)
