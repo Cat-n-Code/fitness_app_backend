@@ -16,6 +16,12 @@ from fitness_app.core.exceptions import (
     handle_validation_exception,
 )
 from fitness_app.core.settings import AppSettings
+from fitness_app.exercises.repositories import ExerciseRepository
+from fitness_app.exercises.routers import exercises_router
+from fitness_app.exercises.services import ExerciseService
+from fitness_app.file_entities.repositories import FileEntityRepository
+from fitness_app.file_entities.routers import file_entities_router
+from fitness_app.file_entities.services import FileEntityService
 from fitness_app.users.repositories import UserRepository
 from fitness_app.users.routers import users_router
 from fitness_app.users.services import UserService
@@ -53,6 +59,8 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     """ Setup routers """
     app.include_router(auth_router)
     app.include_router(users_router)
+    app.include_router(exercises_router)
+    app.include_router(file_entities_router)
 
     """ Setup exception handlers """
     app.add_exception_handler(AppException, handle_app_exception)
@@ -66,18 +74,30 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     app.state.database_manager = DatabaseManager(settings.db_url)
 
     user_repository = UserRepository()
+    file_entity_repository = FileEntityRepository()
+    exercise_repository = ExerciseRepository()
 
     password_service = PasswordService()
     token_service = TokenService(
         settings.auth_token_secret_key, settings.auth_token_lifetime
     )
     auth_service = AuthService(password_service, token_service, user_repository)
-    user_service = UserService(
-        password_service, user_repository
+    user_service = UserService(password_service, user_repository)
+    file_entity_service = FileEntityService(
+        settings.region,
+        settings.aws_access_key_id,
+        settings.aws_secret_access_key,
+        settings.bucket_name,
+        settings.aws_endpoint,
+        settings.aws_access_domain_name,
+        file_entity_repository,
     )
+    exercise_service = ExerciseService(exercise_repository, file_entity_service)
 
     app.state.auth_service = auth_service
     app.state.user_service = user_service
+    app.state.file_entity_service = file_entity_service
+    app.state.exercise_service = exercise_service
 
 
 @asynccontextmanager

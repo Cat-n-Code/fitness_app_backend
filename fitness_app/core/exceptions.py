@@ -65,6 +65,14 @@ class BadRequestException(AppException):
         )
 
 
+class InternalServerError(AppException):
+    def __init__(self, details: str | None = None):
+        super().__init__(
+            ("Internal Server Error" if details is None else details),
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
 def handle_app_exception(_: Request, exception: AppException):
     return JSONResponse(
         status_code=exception.status_code,

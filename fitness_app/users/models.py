@@ -1,7 +1,7 @@
 from datetime import date
 
 from sqlalchemy import UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fitness_app.core.db_manager import Base
 from fitness_app.users.schemas import Sex
@@ -16,5 +16,9 @@ class User(Base):
     sex: Mapped[Sex] = mapped_column(nullable=True)
     birth_date: Mapped[date] = mapped_column(nullable=True)
     password_hash: Mapped[str] = mapped_column(nullable=False)
+
+    exercises: Mapped[list["Exercise"]] = relationship(
+        secondary="user_exercises", back_populates="users"
+    )
 
     __table_args__ = (UniqueConstraint(email),)

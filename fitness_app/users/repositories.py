@@ -6,7 +6,18 @@ from fitness_app.users.models import User
 
 class UserRepository:
     async def get_by_id(self, session: AsyncSession, id: int):
-        return await session.get(User, id)
+        # return await session.get(User, id)
+        statement = (
+            select(User)
+            .where(User.id == id)
+            .options(
+                # joinedload(User.coach_info),
+                # joinedload(User.customer_info),
+            )
+        )
+
+        result = await session.execute(statement)
+        return result.scalar_one()
 
     async def get_by_email(self, session: AsyncSession, email: str):
         statement = select(User).where(User.email == email)
