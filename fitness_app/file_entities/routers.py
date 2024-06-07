@@ -15,14 +15,13 @@ file_entities_router = APIRouter(prefix="/files", tags=["Файлы"])
             "description": "Файла с указанным filename не найдено"
         }
     },
-    summary="Получение файла по filename",
+    response_model=str,
+    summary="Получение ссылки на файл по filename",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def get_by_filename(
     session: DbSession,
     service: FileEntityServiceDep,
-    background_tasks: BackgroundTasks,
-    user: AuthenticateUser,
     filename: str,
-) -> FileResponse:
-    return await service.get_by_filename(session, background_tasks, filename, user.id)
+) -> str:
+    return await service.get_by_filename(session, filename)

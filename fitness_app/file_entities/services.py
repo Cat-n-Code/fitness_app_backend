@@ -61,39 +61,16 @@ class FileEntityService:
         file_entity = FileEntity(filename=new_filename, exercise_id=exercise_id)
         return await self._file_entity_repository.save(session, file_entity)
 
-    async def get_by_filename(
-        self,
-        session: AsyncSession,
-        background_tasks: BackgroundTasks,
-        filename: str,
-        user_id: int,
-    ):
+    async def get_by_filename(self, session: AsyncSession, filename: str):
         file_entity = await self._file_entity_repository.get_by_filename(
             session, filename
         )
-        if file_entity is None:
+        if not file_entity:
             raise EntityNotFoundException(
                 "FileEntity with given filename was not found"
             )
 
-        # Проверка доступа
-        # Информацию о доступе получать от связанных сущностей: exercice, client ,
-        # coach...
-        in_exercise_users_ids = any(
-            user.id == user_id for user in file_entity.exercise.users
-        )
-        if not in_exercise_users_ids:
-            raise ForbiddenException("Forbidden")
-
-        tmp = NamedTemporaryFile(delete=False).__enter__()
-        background_tasks.add_task(os.remove, tmp.name)
-
-        try:
-            self._s3_client.download_file(self._bucket_name, filename, tmp.name)
-        except ClientError as e:
-            raise InternalServerError(str(e))
-
-        return FileResponse(path=tmp.name, filename=filename)
+        return self._aws_access_domain_name + filename
 
     async def delete_by_id(self, session: AsyncSession, id: int):
         file_entity = await self._file_entity_repository.get_by_id(session, id)

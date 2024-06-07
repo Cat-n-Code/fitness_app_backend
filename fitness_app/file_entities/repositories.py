@@ -22,7 +22,7 @@ class FileEntityRepository:
         statement = (
             select(FileEntity)
             .where(FileEntity.filename == filename)
-            .options(joinedload(FileEntity.exercise).selectinload(Exercise.users))
+            .options(joinedload(FileEntity.exercise).selectinload(Exercise.user))
         )
         result = await session.execute(statement)
         return result.scalar_one_or_none()

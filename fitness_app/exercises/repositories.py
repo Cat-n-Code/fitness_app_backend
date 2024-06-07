@@ -1,8 +1,8 @@
-from sqlalchemy import select
+from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
-from fitness_app.exercises.models import Exercise, UserExercises
+from fitness_app.exercises.models import Exercise
 
 
 class ExerciseRepository:
@@ -17,6 +17,7 @@ class ExerciseRepository:
             select(Exercise)
             .where(Exercise.id == id)
             .options(selectinload(Exercise.photos))
+            .options(joinedload(Exercise.user))
         )
         result = await session.execute(statement)
         return result.scalar_one_or_none()
@@ -24,15 +25,15 @@ class ExerciseRepository:
     async def get_by_user_id(
         self, session: AsyncSession, user_id: int, page: int, size: int
     ):
-        statement = (
+        result = await session.execute(
             select(Exercise)
-            .join(UserExercises, Exercise.id == UserExercises.exercise_id)
-            .filter(UserExercises.user_id == user_id)
+            .where(or_(Exercise.user_id == None, Exercise.user_id == user_id))
             .offset(page * size)
             .limit(size)
+            .order_by(desc(Exercise.id))
             .options(selectinload(Exercise.photos))
+            .options(joinedload(Exercise.user))
         )
-        result = await session.execute(statement)
         return result.scalars().all()
 
     async def delete(self, session: AsyncSession, exercise: Exercise):
