@@ -3,7 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fitness_app.chats.models import Chat
 from fitness_app.chats.repositories import ChatRepository
 from fitness_app.chats.schemas import ChatCreateSchema, ChatType
-from fitness_app.core.exceptions import EntityNotFoundException, ForbiddenException
+from fitness_app.core.exceptions import (
+    BadRequestException,
+    EntityNotFoundException,
+    ForbiddenException,
+)
 from fitness_app.core.schemas import PageSchema
 from fitness_app.users.models import User
 from fitness_app.users.schemas import UserSchema
@@ -32,8 +36,8 @@ class ChatService:
 
         return await self._chat_repository.save(session, chat)
 
-    async def get_chat(self, session: AsyncSession, user: User, chat_id: int):
-        chat = await self._chat_repository.get_with_users(session, chat_id)
+    async def get_by_chat_id(self, session: AsyncSession, user: User, chat_id: int):
+        chat = await self._chat_repository.get_with_users_by_chat_id(session, chat_id)
         if chat is None:
             raise EntityNotFoundException("Chat with given id was not found")
         if user not in chat.users:
@@ -41,8 +45,18 @@ class ChatService:
 
         return chat
 
+    async def get_by_user_id(self, session: AsyncSession, user: User, user_id: int):
+        if user.id == user_id:
+            raise BadRequestException("Given user id equals to authorized uzer")
+        user2 = await self._user_service.get_by_id(session, user_id)
+        chat = await self._chat_repository.get_with_users_by_users(session, user, user2)
+        if chat is None:
+            raise EntityNotFoundException("Chat with given user was not found")
+
+        return chat
+
     async def is_accessed_chat(self, session: AsyncSession, user: User, chat_id: int):
-        chat = await self._chat_repository.get_with_users(session, chat_id)
+        chat = await self._chat_repository.get_with_users_by_chat_id(session, chat_id)
         if chat is None:
             raise EntityNotFoundException("Chat with given id was not found")
         if user not in chat.users:

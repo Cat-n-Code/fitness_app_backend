@@ -1,8 +1,8 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
-from fitness_app.chats.models import Chat
+from fitness_app.chats.models import Chat, ChatsUsers
 from fitness_app.users.models import User
 
 
@@ -19,11 +19,29 @@ class ChatRepository:
         await session.commit()
         return chat
 
-    async def get_with_users(self, session: AsyncSession, chat_id: int) -> Chat:
+    async def get_with_users_by_chat_id(
+        self, session: AsyncSession, chat_id: int
+    ) -> Chat:
         statement = (
             select(Chat).where(Chat.id == chat_id).options(selectinload(Chat.users))
         )
         result = await session.execute(statement)
+        return result.scalar_one_or_none()
+
+    async def get_with_users_by_users(
+        self, session: AsyncSession, user1: User, user2: User
+    ) -> Chat:
+        subquery1 = select(ChatsUsers.chat_id).where(ChatsUsers.user_id == user1.id)
+        subquery2 = select(ChatsUsers.chat_id).where(ChatsUsers.user_id == user2.id)
+        statement = (
+            select(Chat)
+            .where(Chat.id.in_(subquery1))
+            .where(Chat.id.in_(subquery2))
+            .where(Chat.type == "DIALOGUE")
+            .options(selectinload(Chat.users))
+        )
+        result = await session.execute(statement)
+
         return result.scalar_one_or_none()
 
     async def count_chats(
@@ -54,7 +72,7 @@ class ChatRepository:
             .order_by(Chat.last_timestamp.desc())
             .offset(page * size)
             .limit(size)
-            .options(selectinload(Chat.users))
+            .options(joinedload(Chat.users))
         )
         result = await session.execute(statement)
-        return result.scalars().all()
+        return result.unique().scalars().all()

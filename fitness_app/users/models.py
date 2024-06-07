@@ -8,6 +8,7 @@ from fitness_app.coaches.models import Coach
 from fitness_app.core.db_manager import Base
 from fitness_app.core.utils import NonEmptyStr
 from fitness_app.customers.models import Customer
+from fitness_app.exercises.models import Exercise
 from fitness_app.users.schemas import Role, Sex
 
 if TYPE_CHECKING:
