@@ -10,7 +10,9 @@ from fitness_app.core.db_manager import DatabaseManager  # isort: split
 
 from fitness_app.auth.routers import auth_router
 from fitness_app.auth.services import AuthService, PasswordService, TokenService
+from fitness_app.chats.repositories import ChatRepository
 from fitness_app.chats.routers import chats_router
+from fitness_app.chats.services import ChatService
 from fitness_app.coaches.repositories import CoachRepository
 from fitness_app.coaches.routers import coaches_router
 from fitness_app.coaches.services import CoachService
@@ -24,6 +26,9 @@ from fitness_app.customers.repositories import CustomerRepository
 from fitness_app.customers.routers import customers_router
 from fitness_app.customers.services import CustomerService
 from fitness_app.exercises.routers import exercises_router
+from fitness_app.messages.repositories import MessageRepository
+from fitness_app.messages.routers import messages_router
+from fitness_app.messages.services import MessageService
 from fitness_app.users.repositories import UserRepository
 from fitness_app.users.routers import users_router
 from fitness_app.users.services import UserService
@@ -65,10 +70,11 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     app.include_router(users_router)
     app.include_router(customers_router)
     app.include_router(coaches_router)
+    app.include_router(chats_router)
+    app.include_router(messages_router)
     app.include_router(exercises_router)
     app.include_router(workouts_router)
     app.include_router(workout_templates_router)
-    app.include_router(chats_router)
 
     """ Setup exception handlers """
     app.add_exception_handler(AppException, handle_app_exception)
@@ -84,6 +90,8 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     user_repository = UserRepository()
     coach_repository = CoachRepository()
     customer_repository = CustomerRepository()
+    message_repository = MessageRepository()
+    chat_repository = ChatRepository()
 
     password_service = PasswordService()
     token_service = TokenService(
@@ -95,11 +103,15 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     customer_service = CustomerService(
         customer_repository, user_repository, user_service
     )
+    chat_service = ChatService(chat_repository, user_service)
+    message_service = MessageService(message_repository, chat_service)
 
     app.state.auth_service = auth_service
     app.state.user_service = user_service
     app.state.coach_service = coach_service
     app.state.customer_service = customer_service
+    app.state.chat_service = chat_service
+    app.state.message_service = message_service
 
 
 @asynccontextmanager
