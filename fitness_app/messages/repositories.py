@@ -1,5 +1,6 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from fitness_app.messages.models import Message
 
@@ -41,13 +42,4 @@ class MessageRepository:
             .limit(size)
         )
         result = await session.execute(statement)
-        # chat = await session.refresh(
-        #     chat,
-        #     options=[
-        #         selectinload(Chat.messages)
-        #         .order_by(aliased(Message).timestamp.desc())
-        #         .offset(page * size)
-        #         .limit(size)
-        #     ],
-        # )
         return result.scalars().all()

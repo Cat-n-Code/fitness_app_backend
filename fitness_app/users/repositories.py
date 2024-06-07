@@ -2,8 +2,6 @@ from sqlalchemy import exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from fitness_app.chats.models import Chat
-from fitness_app.chats.schemas import ChatCreateSchema
 from fitness_app.coaches.models import Coach
 from fitness_app.core.exceptions import EntityAlreadyExistsException
 from fitness_app.customers.models import Customer
@@ -70,20 +68,16 @@ class UserRepository:
         coach_result = await session.execute(coach_statement)
 
         coach = coach_result.scalar_one()
+        users = [customer.user, coach.user]
 
         if coach not in customer.coaches:
             customer.coaches.append(coach)
 
         if customer not in coach.customers:
             coach.customers.append(customer)
-        users = [customer.user, coach.user]
-        chat_create_schema = ChatCreateSchema(type="DIALOGUE")
-        chat = Chat(**chat_create_schema.model_dump())
-        chat.users = users
-        chat.messages = []
-        session.add(chat)
+
         await session.commit()
-        return coach
+        return users
 
     async def unassign_coach_custoemer(
         self, session: AsyncSession, customer_id: int, coach_id: int
@@ -100,27 +94,29 @@ class UserRepository:
         customer_statement = (
             select(Customer)
             .where(Customer.id == customer_id)
-            .options(selectinload(Customer.coaches))
+            .options(selectinload(Customer.coaches), joinedload(Customer.user))
         )
         customer_result = await session.execute(customer_statement)
         customer = customer_result.scalar_one()
         coach_statement = (
             select(Coach)
             .where(Coach.id == coach_id)
-            .options(selectinload(Coach.customers))
+            .options(selectinload(Coach.customers), joinedload(Coach.user))
         )
 
         coach_result = await session.execute(coach_statement)
 
         coach = coach_result.scalar_one()
+        users = [customer.user, coach.user]
 
         if coach in customer.coaches:
             customer.coaches.remove(coach)
 
         if customer in coach.customers:
             coach.customers.remove(customer)
+        await session.flush()
         await session.commit()
-        return coach
+        return users
 
     async def save(self, session: AsyncSession, user: User):
         session.add(user)

@@ -11,6 +11,7 @@ from fitness_app.coaches.schemas import (
 from fitness_app.core.dependencies import CoachServiceDep, DbSession
 from fitness_app.core.schemas import PageSchema
 from fitness_app.core.utils import IdField, PageField, SizeField
+from fitness_app.users.schemas import UserSchema
 
 coaches_router = APIRouter(prefix="/coaches", tags=["Тренеры"])
 
@@ -113,23 +114,23 @@ async def get_coaches(
 
 @coaches_router.post(
     "/assign_me_customer/{customer_id}",
-    response_model=CoachSchema,
+    response_model=UserSchema,
     summary="Назначение клиента текущему тренеру",
     dependencies=[Depends(HasPermission(IsCoach()))],
 )
-async def assign_coach(
+async def assign_customer(
     user: AuthenticateUser,
     service: CoachServiceDep,
     session: DbSession,
     customer_id: IdField,
 ):
-    coach = await service.assign_customer(session, user, customer_id)
-    return CoachSchema.model_validate(coach)
+    customer = await service.assign_customer(session, user, customer_id)
+    return UserSchema.model_validate(customer)
 
 
 @coaches_router.post(
-    "/unassign_my_customer/{customer_id}",
-    response_model=CoachSchema,
+    "/unassign_me_customer/{customer_id}",
+    response_model=UserSchema,
     summary="Отвязка текущего тренера от клиента",
     dependencies=[Depends(HasPermission(IsCoach()))],
 )
@@ -140,4 +141,4 @@ async def unassign_coach(
     customer_id: IdField,
 ):
     coach = await service.unassign_customer(session, user, customer_id)
-    return CoachSchema.model_validate(coach)
+    return UserSchema.model_validate(coach)
