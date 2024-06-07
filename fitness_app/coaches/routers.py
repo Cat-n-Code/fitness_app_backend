@@ -108,10 +108,7 @@ async def get_coaches(
     size: SizeField = 10,
 ):
     customers = await service.get_customers_by_user(session, user, page, size)
-    return PageSchema(
-        total_items_count=customers.total_items_count,
-        items=customers,
-    )
+    return customers
 
 
 @coaches_router.post(
