@@ -16,6 +16,22 @@
             "label": "docker-compose down dev (with volumes)",
             "type": "shell",
             "command": "docker compose -f docker-compose.yaml -f docker-compose.dev.yaml down --volumes"
+        },
+        {
+            "label": "docker-compose up debug",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.yaml -f docker-compose.debug.yaml up --build -d"
+        },
+        {
+            "label": "docker-compose down debug",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.yaml -f docker-compose.debug.yaml down",
+            "problemMatcher": []
+        },
+        {
+            "label": "docker-compose down debug (with volumes)",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.yaml -f docker-compose.debug.yaml down --volumes"
         }
     ]
 }

@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -8,7 +8,11 @@ from fitness_app.coaches.models import Coach
 from fitness_app.core.db_manager import Base
 from fitness_app.core.utils import NonEmptyStr
 from fitness_app.customers.models import Customer
+from fitness_app.exercises.models import Exercise
 from fitness_app.users.schemas import Role, Sex
+
+if TYPE_CHECKING:
+    from fitness_app.chats.models import Chat
 
 
 class User(Base):
@@ -31,6 +35,9 @@ class User(Base):
         "Customer", back_populates="user"
     )
     coach_info: Mapped[Optional["Coach"]] = relationship("Coach", back_populates="user")
+    chats: Mapped[list["Chat"]] = relationship(
+        "Chat", back_populates="users", secondary="chats_users"
+    )
 
     __table_args__ = (UniqueConstraint(email),)
 
@@ -42,3 +49,11 @@ class CoachesCustomers(Base):
         ForeignKey("customers.id"), primary_key=True
     )
     coach_id: Mapped[int] = mapped_column(ForeignKey("coaches.id"), primary_key=True)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "customer_id",
+            "coach_id",
+            name="idx_unique_customer_coach",
+        ),
+    )
