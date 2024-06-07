@@ -23,7 +23,12 @@ from fitness_app.core.settings import AppSettings
 from fitness_app.customers.repositories import CustomerRepository
 from fitness_app.customers.routers import customers_router
 from fitness_app.customers.services import CustomerService
+from fitness_app.exercises.repositories import ExerciseRepository
 from fitness_app.exercises.routers import exercises_router
+from fitness_app.exercises.services import ExerciseService
+from fitness_app.file_entities.repositories import FileEntityRepository
+from fitness_app.file_entities.routers import file_entities_router
+from fitness_app.file_entities.services import FileEntityService
 from fitness_app.users.repositories import UserRepository
 from fitness_app.users.routers import users_router
 from fitness_app.users.services import UserService
@@ -63,9 +68,10 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     """ Setup routers """
     app.include_router(auth_router)
     app.include_router(users_router)
+    app.include_router(exercises_router)
+    app.include_router(file_entities_router)
     app.include_router(customers_router)
     app.include_router(coaches_router)
-    app.include_router(exercises_router)
     app.include_router(workouts_router)
     app.include_router(workout_templates_router)
     app.include_router(chats_router)
@@ -82,6 +88,8 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     app.state.database_manager = DatabaseManager(settings.db_url)
 
     user_repository = UserRepository()
+    file_entity_repository = FileEntityRepository()
+    exercise_repository = ExerciseRepository()
     coach_repository = CoachRepository()
     customer_repository = CustomerRepository()
 
@@ -91,13 +99,25 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     )
     auth_service = AuthService(password_service, token_service, user_repository)
     user_service = UserService(password_service, user_repository)
+    file_entity_service = FileEntityService(
+        settings.region,
+        settings.aws_access_key_id,
+        settings.aws_secret_access_key,
+        settings.bucket_name,
+        settings.aws_endpoint,
+        settings.aws_access_domain_name,
+        file_entity_repository,
+    )
     coach_service = CoachService(coach_repository, user_repository, user_service)
     customer_service = CustomerService(
         customer_repository, user_repository, user_service
     )
+    exercise_service = ExerciseService(exercise_repository, file_entity_service)
 
     app.state.auth_service = auth_service
     app.state.user_service = user_service
+    app.state.file_entity_service = file_entity_service
+    app.state.exercise_service = exercise_service
     app.state.coach_service = coach_service
     app.state.customer_service = customer_service
 

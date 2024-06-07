@@ -14,6 +14,12 @@ services:
       - auth_token_secret_key
       - db_url
       - store_photos_path
+      - region
+      - aws_access_key_id
+      - aws_secret_access_key
+      - bucket_name
+      - aws_endpoint
+      - aws_access_domain_name
     depends_on:
       database:
         condition: service_healthy
@@ -37,6 +43,7 @@ services:
       - db_user
       - db_password
 
+
 secrets:
   auth_token_secret_key:
     environment: AUTH_TOKEN_SECRET_KEY
@@ -50,6 +57,18 @@ secrets:
     environment: POSTGRES_PASSWORD
   store_photos_path:
     environment: STORE_PHOTOS_PATH
+  region:
+    environment: REGION
+  aws_access_key_id:
+    environment: AWS_ACCESS_KEY_ID
+  aws_secret_access_key:
+    environment: AWS_SECRET_ACCESS_KEY
+  bucket_name:
+    environment: BUCKET_NAME
+  aws_endpoint:
+    environment: AWS_ENDPOINT
+  aws_access_domain_name:
+    environment: AWS_ACCESS_DOMAIN_NAME
 
 volumes:
   db_data:
