@@ -4,7 +4,6 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 from fitness_app.file_entities.schemas import FileEntitySchema
-from fitness_app.users.schemas import UserSchema
 
 
 class ExerciseType(StrEnum):
@@ -32,7 +31,6 @@ class ExerciseSchema(BaseModel):
     difficulty: Optional[Difficulty] = None
     description: Optional[str] = None
     photos: Optional[list[FileEntitySchema]] = None
-    user: Optional[UserSchema] = None
 
 
 class ExerciseCreateSchema(BaseModel):

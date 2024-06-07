@@ -1,6 +1,6 @@
 from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import selectinload
 
 from fitness_app.exercises.models import Exercise
 
@@ -17,7 +17,6 @@ class ExerciseRepository:
             select(Exercise)
             .where(Exercise.id == id)
             .options(selectinload(Exercise.photos))
-            .options(joinedload(Exercise.user))
         )
         result = await session.execute(statement)
         return result.scalar_one_or_none()
@@ -27,12 +26,11 @@ class ExerciseRepository:
     ):
         result = await session.execute(
             select(Exercise)
-            .where(or_(Exercise.user_id == None, Exercise.user_id == user_id))
+            .where(or_(Exercise.user_id is None, Exercise.user_id == user_id))
             .offset(page * size)
             .limit(size)
             .order_by(desc(Exercise.id))
             .options(selectinload(Exercise.photos))
-            .options(joinedload(Exercise.user))
         )
         return result.scalars().all()
 
