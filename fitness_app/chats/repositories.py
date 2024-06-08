@@ -28,6 +28,21 @@ class ChatRepository:
         result = await session.execute(statement)
         return result.scalar_one_or_none()
 
+    async def is_exist_by_users(
+        self, session: AsyncSession, user1: User, user2: User
+    ) -> Chat:
+        subquery1 = select(ChatsUsers.chat_id).where(ChatsUsers.user_id == user1.id)
+        subquery2 = select(ChatsUsers.chat_id).where(ChatsUsers.user_id == user2.id)
+        statement = (
+            select(Chat)
+            .where(Chat.id.in_(subquery1))
+            .where(Chat.id.in_(subquery2))
+            .where(Chat.type == "DIALOGUE")
+        )
+        result = await session.execute(statement)
+        chat = result.scalar_one_or_none()
+        return chat is not None
+
     async def get_with_users_by_users(
         self, session: AsyncSession, user1: User, user2: User
     ) -> Chat:

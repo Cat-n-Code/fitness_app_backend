@@ -1,9 +1,9 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from fitness_app.coaches.models import Coach
 from fitness_app.customers.models import Customer
+from fitness_app.users.models import CoachesCustomers
 
 
 class CoachRepository:
@@ -25,8 +25,7 @@ class CoachRepository:
         page: int,
         size: int,
     ):
-        statement = select(Coach).order_by(Coach.id)
-        statement.offset(page * size).limit(size)
+        statement = select(Coach).order_by(Coach.id).offset(page * size).limit(size)
         result = await session.execute(statement)
         return result.scalars().all()
 
@@ -38,13 +37,14 @@ class CoachRepository:
         size: int,
     ):
         statement = (
-            select(Coach)
-            .where(Coach.id == coach_id)
-            .options(selectinload(Coach.customers))
+            select(Customer)
+            .join(CoachesCustomers, Customer.id == CoachesCustomers.customer_id)
+            .where(CoachesCustomers.coach_id == coach_id)
+            .offset(page * size)
+            .limit(size)
         )
-        statement.offset(page * size).limit(size)
         result = await session.execute(statement)
-        return result.scalar_one().customers
+        return result.scalars().all()
 
     async def count_coaches_by_user_id(self, session: AsyncSession, coach_id: int):
         statement = (

@@ -29,7 +29,9 @@ class ChatService:
         users: list,
         type: ChatType = "DIALOGUE",
     ):
-        if await self.get_by_user_id(session, users[0], users[1].id) is None:
+        if not await self._chat_repository.is_exist_by_users(
+            session, users[0], users[1]
+        ):
             chat_create_schema = ChatCreateSchema(type=type)
             chat = Chat(**chat_create_schema.model_dump())
             chat.users = users
