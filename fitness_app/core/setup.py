@@ -42,6 +42,7 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
         lifespan=_app_lifespan,
         servers=[
             {"url": "http://localhost:8080", "description": "Локальный сервер"},
+            {"url": "http://176.109.107.222:8080", "description": "Dev сервер"},
         ],
         responses={
             400: {"description": "Неверный формат входных данных"},
