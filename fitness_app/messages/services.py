@@ -2,7 +2,6 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fitness_app.chats.models import Chat
 from fitness_app.chats.services import ChatService
 from fitness_app.core.exceptions import EntityNotFoundException, ForbiddenException
 from fitness_app.core.schemas import PageSchema
@@ -62,7 +61,7 @@ class MessageService:
         create_schema: MessageCreateSchema,
         chat_id: int,
     ):
-        chat = await self._chat_service.get_by_chat_id(Chat, user, chat_id)
+        chat = await self._chat_service.get_by_chat_id(session, user, chat_id)
         create_schema_dict = create_schema.model_dump()
         create_schema_dict["sender_id"] = user.id
         create_schema_dict["chat_id"] = chat_id
