@@ -3,7 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from fitness_app.coaches.models import Coach
-from fitness_app.core.exceptions import EntityAlreadyExistsException
+from fitness_app.core.exceptions import (
+    EntityAlreadyExistsException,
+    EntityNotFoundException,
+)
 from fitness_app.customers.models import Customer
 from fitness_app.users.models import CoachesCustomers, User
 
@@ -59,7 +62,9 @@ class UserRepository:
         )
 
         customer_result = await session.execute(customer_statement)
-        customer = customer_result.scalar_one()
+        customer = customer_result.scalar_one_or_none()
+        if customer is None:
+            raise EntityNotFoundException("customer with given id was not found")
         coach_statement = (
             select(Coach)
             .where(Coach.id == coach_id)
@@ -67,7 +72,9 @@ class UserRepository:
         )
         coach_result = await session.execute(coach_statement)
 
-        coach = coach_result.scalar_one()
+        coach = coach_result.scalar_one_or_none()
+        if coach is None:
+            raise EntityNotFoundException("coach with given id was not found")
         users = [customer.user, coach.user]
 
         if coach not in customer.coaches:
