@@ -1,4 +1,3 @@
-from datetime import date
 from enum import StrEnum
 from typing import Optional
 
@@ -32,7 +31,6 @@ class ExercisePreference(StrEnum):
 
 class CustomerBaseSchema(BaseModel):
     goal: Optional[UserGoal]
-    birth_date: Optional[date]
     fitness_level: Optional[FitnessLevel]
     preference: Optional[ExercisePreference]
 

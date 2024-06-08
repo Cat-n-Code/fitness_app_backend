@@ -8,6 +8,14 @@ class AppSettings(BaseSettings):
     cors_allowed_origins: list[str]
     auth_token_lifetime: int = 3600
     auth_token_secret_key: str
-    store_photos_path: str
 
     default_steps_goal: int = 8000
+
+    store_photos_path: str
+
+    region: str
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    bucket_name: str
+    aws_endpoint: str
+    aws_access_domain_name: str

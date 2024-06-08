@@ -14,6 +14,12 @@ services:
       - auth_token_secret_key
       - db_url
       - store_photos_path
+      - region
+      - aws_access_key_id
+      - aws_secret_access_key
+      - bucket_name
+      - aws_endpoint
+      - aws_access_domain_name
     depends_on:
       database:
         condition: service_healthy
@@ -29,6 +35,12 @@ services:
       start_period: 5s
     volumes:
       - db_data:/var/lib/postgresql/data
+      - type: bind
+        source: ./db/exercises.sql
+        target: /docker-entrypoint-initdb.d/exercises.sql
+      - type: bind
+        source: ./db/file_entities.sql
+        target: /docker-entrypoint-initdb.d/file_entities.sql
     environment:
       POSTGRES_DB: $POSTGRES_DATABASE
       POSTGRES_USER_FILE: "/run/secrets/db_user"
@@ -36,6 +48,7 @@ services:
     secrets:
       - db_user
       - db_password
+
 
 secrets:
   auth_token_secret_key:
@@ -50,6 +63,18 @@ secrets:
     environment: POSTGRES_PASSWORD
   store_photos_path:
     environment: STORE_PHOTOS_PATH
+  region:
+    environment: REGION
+  aws_access_key_id:
+    environment: AWS_ACCESS_KEY_ID
+  aws_secret_access_key:
+    environment: AWS_SECRET_ACCESS_KEY
+  bucket_name:
+    environment: BUCKET_NAME
+  aws_endpoint:
+    environment: AWS_ENDPOINT
+  aws_access_domain_name:
+    environment: AWS_ACCESS_DOMAIN_NAME
 
 volumes:
   db_data:

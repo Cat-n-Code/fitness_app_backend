@@ -4,15 +4,15 @@ from fastapi import APIRouter, Depends, Path
 
 from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
 from fitness_app.auth.permissions import Authenticated, IsCustomer
-from fitness_app.coaches.schemas import CoachSchema
 from fitness_app.core.dependencies import CustomerServiceDep, DbSession
 from fitness_app.core.schemas import PageSchema
-from fitness_app.core.utils import PageField, SizeField
+from fitness_app.core.utils import IdField, PageField, SizeField
 from fitness_app.customers.schemas import (
     CustomerCreateSchema,
     CustomerSchema,
     CustomerUpdateSchema,
 )
+from fitness_app.users.schemas import UserSchema
 
 customers_router = APIRouter(prefix="/customers", tags=["Клиенты"])
 
@@ -36,6 +36,21 @@ async def get_all(
     )
 
 
+@customers_router.get(
+    "/id/{user_id}",
+    summary="Получить клинта по customer_id",
+    response_model=CustomerSchema,
+    # dependencies=[Depends(HasPermission(Authenticated()))],
+)
+async def get(
+    session: DbSession,
+    service: CustomerServiceDep,
+    user_id: IdField,
+):
+    user = await service.get_by_id(session, user_id)
+    return CustomerSchema.model_validate(user)
+
+
 @customers_router.post(
     "/registration",
     summary="Создать клиента",
@@ -47,8 +62,8 @@ async def create(
     service: CustomerServiceDep,
     schema: CustomerCreateSchema,
 ):
-    coach = await service.create(session, schema)
-    return CustomerSchema.model_validate(coach, from_attributes=True)
+    customer = await service.create(session, schema)
+    return CustomerSchema.model_validate(customer, from_attributes=True)
 
 
 @customers_router.get(
@@ -95,15 +110,12 @@ async def get_coaches(
     size: SizeField = 10,
 ):
     coaches = await service.get_coaches_by_user(session, user, page, size)
-    return PageSchema(
-        total_items_count=coaches.total_items_count,
-        items=coaches,
-    )
+    return coaches
 
 
 @customers_router.post(
     "/assign_me_coach/{coach_id}",
-    response_model=CoachSchema,
+    response_model=UserSchema,
     summary="Назначение тренера текущему клиенту",
     dependencies=[Depends(HasPermission(IsCustomer()))],
 )
@@ -114,12 +126,12 @@ async def assign_coach(
     coach_id: Annotated[int, Path],
 ):
     coach = await service.assign_coach(session, user, coach_id)
-    return CoachSchema.model_validate(coach)
+    return UserSchema.model_validate(coach)
 
 
 @customers_router.post(
     "/unassign_me_coach/{coach_id}",
-    response_model=CoachSchema,
+    response_model=UserSchema,
     summary="Отвязка текущего клиента от тренера",
     dependencies=[Depends(HasPermission(IsCustomer()))],
 )
@@ -130,7 +142,7 @@ async def unassign_coach(
     coach_id: Annotated[int, Path],
 ):
     coach = await service.unassign_coach(session, user, coach_id)
-    return CoachSchema.model_validate(coach)
+    return UserSchema.model_validate(coach)
 
 
 @customers_router.get(
