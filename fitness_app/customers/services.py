@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from fitness_app.chats.services import ChatService
 from fitness_app.coaches.models import Coach
 from fitness_app.coaches.schemas import CoachSchema
 from fitness_app.core.exceptions import EntityNotFoundException
@@ -24,10 +25,12 @@ class CustomerService:
         customer_repository: CustomerRepository,
         user_repository: UserRepository,
         user_service: UserService,
+        chat_service: ChatService,
     ):
         self._customer_repository = customer_repository
         self._user_repository = user_repository
         self._user_service = user_service
+        self._chat_service = chat_service
 
     async def create(self, session: AsyncSession, schema: CustomerCreateSchema):
         userSchema = UserCreateSchema(**schema.model_dump())
@@ -91,19 +94,21 @@ class CustomerService:
 
     async def assign_coach(self, session: AsyncSession, user: User, coach_id: int):
         customer_id = user.customer_info.id
-        coach = await self._user_repository.assign_coach_custoemer(
+        users = await self._user_repository.assign_coach_custoemer(
             session=session, customer_id=customer_id, coach_id=coach_id
         )
-        return coach
+        await self._chat_service.create(session, users)
+
+        return users[1]
 
     async def unassign_coach(self, session: AsyncSession, user: User, coach_id: int):
         customer_id = user.customer_info.id
         if await session.get(Coach, customer_id) is None:
             raise EntityNotFoundException("Coach with given id was not found")
-        coach = await self._user_repository.unassign_coach_custoemer(
+        users = await self._user_repository.unassign_coach_custoemer(
             session=session, coach_id=coach_id, customer_id=customer_id
         )
-        return coach
+        return users[1]
 
     async def get_by_user_id(self, session: AsyncSession, user_id: int):
         user = await session.get(User, id)

@@ -1,7 +1,13 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fitness_app.core.db_manager import Base
+
+if TYPE_CHECKING:
+    from fitness_app.file_entities.models import FileEntity
+    from fitness_app.users.models import User
 
 
 class Exercise(Base):

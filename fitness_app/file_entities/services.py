@@ -50,7 +50,12 @@ class FileEntityService:
 
         return cur_uuid
 
-    async def create(self, session: AsyncSession, file: UploadFile, exercise_id: int):
+    async def create(
+        self,
+        session: AsyncSession,
+        file: UploadFile,
+        exercise_id: int = None,
+    ):
         new_filename = await self.add_to_s3(file)
         file_entity = FileEntity(filename=new_filename, exercise_id=exercise_id)
         return await self._file_entity_repository.save(session, file_entity)

@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from fitness_app.chats.services import ChatService
 from fitness_app.coaches.models import Coach
 from fitness_app.coaches.repositories import CoachRepository
 from fitness_app.coaches.schemas import (
@@ -24,10 +25,12 @@ class CoachService:
         coach_repository: CoachRepository,
         user_repository: UserRepository,
         user_service: UserService,
+        chat_service: ChatService,
     ):
         self._coach_repository = coach_repository
         self._user_repository = user_repository
         self._user_service = user_service
+        self._chat_service = chat_service
 
     async def create(self, session: AsyncSession, schema: CoachCreateSchema):
         userSchema = UserCreateSchema(**schema.model_dump())
@@ -115,10 +118,11 @@ class CoachService:
         coach_id = user.coach_info.id
         if await session.get(Customer, customer_id) is None:
             raise EntityNotFoundException("Customer with given id was not found")
-        coach = await self._user_repository.assign_coach_custoemer(
+        users = await self._user_repository.assign_coach_custoemer(
             session=session, coach_id=coach_id, customer_id=customer_id
         )
-        return coach
+        await self._chat_service.create(session, users)
+        return users[0]
 
     async def unassign_customer(
         self, session: AsyncSession, user: User, customer_id: int
@@ -126,10 +130,10 @@ class CoachService:
         coach_id = user.coach_info.id
         if await session.get(Customer, customer_id) is None:
             raise EntityNotFoundException("Customer with given id was not found")
-        coach = await self._user_repository.unassign_coach_custoemer(
+        users = await self._user_repository.unassign_coach_custoemer(
             session=session, coach_id=coach_id, customer_id=customer_id
         )
-        return coach
+        return users[0]
 
     async def delete_by_id(self, session: AsyncSession, coach_id: int):
         coach = await session.get(Coach, coach_id)

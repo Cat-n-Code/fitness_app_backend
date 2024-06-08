@@ -11,6 +11,7 @@ from fitness_app.coaches.schemas import (
 from fitness_app.core.dependencies import CoachServiceDep, DbSession
 from fitness_app.core.schemas import PageSchema
 from fitness_app.core.utils import IdField, PageField, SizeField
+from fitness_app.users.schemas import UserSchema
 
 coaches_router = APIRouter(prefix="/coaches", tags=["Тренеры"])
 
@@ -32,6 +33,21 @@ async def get_all(
         total_items_count=coaches.total_items_count,
         items=list(map(CoachSchema.model_validate, coaches.items)),
     )
+
+
+@coaches_router.get(
+    "/id/{user_id}",
+    summary="Получить тренера по customer_id",
+    response_model=CoachSchema,
+    # dependencies=[Depends(HasPermission(Authenticated()))],
+)
+async def get(
+    session: DbSession,
+    service: CoachServiceDep,
+    user_id: IdField,
+):
+    user = await service.get_by_id(session, user_id)
+    return CoachSchema.model_validate(user)
 
 
 @coaches_router.post(
@@ -93,31 +109,28 @@ async def get_coaches(
     size: SizeField = 10,
 ):
     customers = await service.get_customers_by_user(session, user, page, size)
-    return PageSchema(
-        total_items_count=customers.total_items_count,
-        items=customers,
-    )
+    return customers
 
 
 @coaches_router.post(
     "/assign_me_customer/{customer_id}",
-    response_model=CoachSchema,
+    response_model=UserSchema,
     summary="Назначение клиента текущему тренеру",
     dependencies=[Depends(HasPermission(IsCoach()))],
 )
-async def assign_coach(
+async def assign_customer(
     user: AuthenticateUser,
     service: CoachServiceDep,
     session: DbSession,
     customer_id: IdField,
 ):
-    coach = await service.assign_customer(session, user, customer_id)
-    return CoachSchema.model_validate(coach)
+    customer = await service.assign_customer(session, user, customer_id)
+    return UserSchema.model_validate(customer)
 
 
 @coaches_router.post(
-    "/unassign_my_customer/{customer_id}",
-    response_model=CoachSchema,
+    "/unassign_me_customer/{customer_id}",
+    response_model=UserSchema,
     summary="Отвязка текущего тренера от клиента",
     dependencies=[Depends(HasPermission(IsCoach()))],
 )
@@ -128,4 +141,4 @@ async def unassign_coach(
     customer_id: IdField,
 ):
     coach = await service.unassign_customer(session, user, customer_id)
-    return CoachSchema.model_validate(coach)
+    return UserSchema.model_validate(coach)

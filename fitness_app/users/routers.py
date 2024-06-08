@@ -4,7 +4,7 @@ from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
 from fitness_app.auth.permissions import Anonymous, Authenticated
 from fitness_app.core.dependencies import DbSession, UserServiceDep
 from fitness_app.core.schemas import PageSchema
-from fitness_app.core.utils import PageField, SizeField
+from fitness_app.core.utils import IdField, PageField, SizeField
 from fitness_app.users.schemas import (
     UserCreateSchema,
     UserPasswordUpdateSchema,
@@ -32,6 +32,21 @@ async def get_all(
         total_items_count=users.total_items_count,
         items=list(map(UserSchema.model_validate, users.items)),
     )
+
+
+@users_router.get(
+    "/id/{user_id}",
+    summary="Получить пользователя по customer_id",
+    response_model=UserSchema,
+    # dependencies=[Depends(HasPermission(Authenticated()))],
+)
+async def get(
+    session: DbSession,
+    service: UserServiceDep,
+    user_id: IdField,
+):
+    user = await service.get_by_id(session, user_id)
+    return UserSchema.model_validate(user)
 
 
 @users_router.post(
