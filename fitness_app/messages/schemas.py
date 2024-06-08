@@ -16,7 +16,10 @@ class MessageBaseSchema(MessageCreateSchema):
     sender_id: int
 
 
-class MessageSchema(MessageBaseSchema):
+class MessageUpdateSchema(MessageCreateSchema):
+    id: int
 
+
+class MessageSchema(MessageBaseSchema):
     id: int
     timestamp: datetime
