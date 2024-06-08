@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fitness_app.core.exceptions import EntityNotFoundException
+from fitness_app.core.exceptions import EntityNotFoundException, ForbiddenException
 from fitness_app.core.utils import update_model_by_schema
 from fitness_app.exercises.models import Exercise
 from fitness_app.exercises.repositories import ExerciseRepository
@@ -47,12 +47,9 @@ class ExerciseService:
     async def get_by_user_id(
         self, session: AsyncSession, user_id: int, page: int, size: int
     ):
-        exercises = await self._exercise_repository.get_by_user_id(
+        return await self._exercise_repository.get_by_user_id(
             session, user_id, page, size
         )
-        if not exercises:
-            raise EntityNotFoundException("Упражнения с указанным id не найдено")
-        return exercises
 
     async def update_by_id(
         self,
@@ -63,6 +60,8 @@ class ExerciseService:
         exercise = await self._exercise_repository.get_by_id(session, schema.id)
         if not exercise:
             raise EntityNotFoundException("Упражнения с указанным id не найдено")
+        if not exercise.user_id:
+            raise ForbiddenException("Отказано в доступе")
 
         update_model_by_schema(exercise, schema)
         exercise = await self._exercise_repository.save(session, exercise)
@@ -81,6 +80,8 @@ class ExerciseService:
         exercise = await self._exercise_repository.get_by_id(session, id)
         if not exercise:
             raise EntityNotFoundException("Упражнения с указанным id не найдено")
+        if not exercise.user_id:
+            raise ForbiddenException("Отказано в доступе")
 
         if exercise.photos:
             for i in range(len(exercise.photos)):

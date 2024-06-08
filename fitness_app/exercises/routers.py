@@ -57,11 +57,6 @@ async def get_by_id(
 @exercises_router.get(
     "/users/current",
     response_model=list[ExerciseSchema],
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "description": "Упражнения с указанным id не найдено"
-        }
-    },
     summary="Получение заданий текущего пользователя",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )

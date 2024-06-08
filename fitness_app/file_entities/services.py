@@ -69,7 +69,8 @@ class FileEntityService:
                 "FileEntity with given filename was not found"
             )
 
-        return self._aws_access_domain_name + filename
+        full_url = self._aws_access_domain_name + filename
+        return full_url
 
     async def delete_by_id(self, session: AsyncSession, id: int):
         file_entity = await self._file_entity_repository.get_by_id(session, id)
