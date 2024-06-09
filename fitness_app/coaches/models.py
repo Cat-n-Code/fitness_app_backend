@@ -9,6 +9,7 @@ from fitness_app.core.db_manager import Base
 if TYPE_CHECKING:
     from fitness_app.customers.models import Customer
     from fitness_app.users.models import User
+    from fitness_app.workouts.models import Workout
 
 
 class Coach(Base):
@@ -22,3 +23,4 @@ class Coach(Base):
     customers: Mapped[list["Customer"]] = relationship(
         "Customer", back_populates="coaches", secondary="coaches_customers"
     )
+    workouts: Mapped[list["Workout"]] = relationship(back_populates="coach")

@@ -1,59 +1,48 @@
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from fitness_app.coaches.models import Coach
 from fitness_app.core.db_manager import Base
-from fitness_app.core.utils import NonEmptyStr
-from fitness_app.customers.models import Customer
-from fitness_app.exercises.models import Exercise
-from fitness_app.users.schemas import Role, Sex
+from fitness_app.workouts.schemas import TypeConnection
 
 if TYPE_CHECKING:
     from fitness_app.chats.models import Chat
+    from fitness_app.coaches.models import Coach
+    from fitness_app.customers.models import Customer
+    from fitness_app.exercises.models import Exercise
 
 
-class User(Base):
-    __tablename__ = "users"
+class ExerciseWorkout(Base):
+    __tablename__ = "exercise_workouts"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[NonEmptyStr] = mapped_column(unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(nullable=False)
-    sex: Mapped[Optional[Sex]] = mapped_column(nullable=True)
-    birth_date: Mapped[Optional[date]] = mapped_column(nullable=True)
-    password_hash: Mapped[str] = mapped_column(nullable=False)
+    exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id"))
+    workout_id: Mapped[int] = mapped_column(ForeignKey("workouts.id"))
+    num_order: Mapped[int] = mapped_column(nullable=False)
+    num_sets: Mapped[int] = mapped_column(nullable=True)
+    num_sets_done: Mapped[int] = mapped_column(nullable=False, default=0)
+    num_reps: Mapped[int] = mapped_column(nullable=True)
 
-    exercises: Mapped[list["Exercise"]] = relationship(back_populates="user")
+    exercise: Mapped["Exercise"] = relationship(back_populates="exercise_workouts")
+    workout: Mapped["Workout"] = relationship(back_populates="exercise_workouts")
 
-    role: Mapped[Role] = mapped_column(
-        server_default="CUSTOMER", default="CUSTOMER", nullable=False
+
+class Workout(Base):
+    __tablename__ = "workouts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    coach_id: Mapped[int] = mapped_column(ForeignKey("coaches.id"), nullable=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=True)
+    chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), nullable=True)
+    type_connection: Mapped[TypeConnection] = mapped_column(nullable=True)
+    date_field: Mapped[date] = mapped_column(nullable=True)
+    time_start: Mapped[datetime] = mapped_column(nullable=True)
+
+    exercise_workouts: Mapped[Optional[list["ExerciseWorkout"]]] = relationship(
+        back_populates="workout", cascade="all, delete-orphan"
     )
-
-    customer_info: Mapped[Optional["Customer"]] = relationship(
-        "Customer", back_populates="user"
-    )
-    coach_info: Mapped[Optional["Coach"]] = relationship("Coach", back_populates="user")
-    chats: Mapped[list["Chat"]] = relationship(
-        "Chat", back_populates="users", secondary="chats_users"
-    )
-
-    __table_args__ = (UniqueConstraint(email),)
-
-
-class CoachesCustomers(Base):
-    __tablename__ = "coaches_customers"
-
-    customer_id: Mapped[int] = mapped_column(
-        ForeignKey("customers.id"), primary_key=True
-    )
-    coach_id: Mapped[int] = mapped_column(ForeignKey("coaches.id"), primary_key=True)
-
-    __table_args__ = (
-        UniqueConstraint(
-            "customer_id",
-            "coach_id",
-            name="idx_unique_customer_coach",
-        ),
-    )
+    customer: Mapped["Customer"] = relationship(back_populates="workouts")
+    coach: Mapped["Coach"] = relationship(back_populates="workouts")
+    chat: Mapped["Chat"] = relationship(back_populates="workout")

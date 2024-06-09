@@ -8,6 +8,7 @@ from fitness_app.core.db_manager import Base
 if TYPE_CHECKING:
     from fitness_app.file_entities.models import FileEntity
     from fitness_app.users.models import User
+    from fitness_app.workouts.schemas import ExerciseWorkout
 
 
 class Exercise(Base):
@@ -26,5 +27,8 @@ class Exercise(Base):
 
     user: Mapped["User"] = relationship(back_populates="exercises")
     photos: Mapped[list["FileEntity"]] = relationship(
+        back_populates="exercise", cascade="all, delete-orphan"
+    )
+    exercise_workouts: Mapped[list["ExerciseWorkout"]] = relationship(
         back_populates="exercise", cascade="all, delete-orphan"
     )

@@ -105,3 +105,7 @@ async def delete_by_id(
     session: DbSession, service: ExerciseServiceDep, id: Annotated[int, Path]
 ) -> ExerciseSchema:
     return await service.delete_by_id(session, id)
+
+
+# //////////////////////////////////////////////////////////////////////////..............................//////////////
+# Удалять и обновлять только владелец/////////////////////////////////////////////////////////////////////////////////////

@@ -1,137 +1,126 @@
-from sqlalchemy import exists, func, select
+from datetime import date
+from typing import Optional
+
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from fitness_app.coaches.models import Coach
-from fitness_app.core.exceptions import (
-    EntityAlreadyExistsException,
-    EntityNotFoundException,
-)
-from fitness_app.customers.models import Customer
-from fitness_app.users.models import CoachesCustomers, User
+from fitness_app.workouts.models import ExerciseWorkout, Workout
 
 
-class UserRepository:
+class WorkoutRepository:
+    async def save(self, session: AsyncSession, workout: Workout):
+        session.add(workout)
+        await session.flush()
+        await session.commit()
+        return workout
+
     async def get_by_id(self, session: AsyncSession, id: int):
-        # return await session.get(User, id)
         statement = (
-            select(User)
-            .where(User.id == id)
-            .options(joinedload(User.coach_info), joinedload(User.customer_info))
+            select(Workout)
+            .where(Workout.id == id)
+            .options(
+                joinedload(Workout.customer),
+                joinedload(Workout.coach),
+                selectinload(Workout.exercise_workouts).options(
+                    joinedload(ExerciseWorkout.exercise)
+                ),
+            )
         )
 
+        exercise_workouts_exist = await session.execute(
+            select(ExerciseWorkout).where(ExerciseWorkout.workout_id == id)
+        )
+        if exercise_workouts_exist.scalars().first() is not None:
+            statement = statement.order_by(ExerciseWorkout.num_order)
+
         result = await session.execute(statement)
         return result.scalar_one_or_none()
 
-    async def get_by_email(self, session: AsyncSession, email: str):
-        statement = select(User).where(User.email == email)
-        result = await session.execute(statement)
-        return result.scalar_one_or_none()
+    async def get_workouts_by_coach_id(
+        self,
+        session: AsyncSession,
+        coach_id: int,
+        page: int,
+        size: int,
+        date_start: Optional[date] = None,
+        date_finish: Optional[date] = None,
+    ):
+        statement = select(Workout).where(Workout.coach_id == coach_id)
+        if date_start:
+            statement = statement.where(Workout.date_field >= date_start)
+        if date_finish:
+            statement = statement.where(Workout.date_field <= date_finish)
+        statement = (
+            statement.order_by(desc(Workout.date_field))
+            .offset(page * size)
+            .limit(size)
+            .options(
+                joinedload(Workout.customer),
+                joinedload(Workout.coach),
+                selectinload(Workout.exercise_workouts).options(
+                    joinedload(ExerciseWorkout.exercise)
+                ),
+            )
+            .order_by(ExerciseWorkout.num_order)
+        )
 
-    async def exists_by_email(self, session: AsyncSession, email: str):
-        statement = select(exists().where(User.email == email))
-        result = await session.execute(statement)
-        return result.scalar_one()
-
-    async def get_all(self, session: AsyncSession, page: int, size: int):
-        statement = select(User).order_by(User.id).offset(page * size).limit(size)
         result = await session.execute(statement)
         return result.scalars().all()
 
-    async def count_all(self, session: AsyncSession):
-        statement = select(func.count()).select_from(User)
+    async def get_workouts_by_customer_id(
+        self,
+        session: AsyncSession,
+        customer_id: int,
+        page: int,
+        size: int,
+        date_start: Optional[date] = None,
+        date_finish: Optional[date] = None,
+    ):
+        statement = select(Workout).where(Workout.customer_id == customer_id)
+        if date_start:
+            statement = statement.where(Workout.date_field >= date_start)
+        if date_finish:
+            statement = statement.where(Workout.date_field <= date_finish)
+        statement = (
+            statement.order_by(desc(Workout.date_field))
+            .offset(page * size)
+            .limit(size)
+            .options(
+                joinedload(Workout.customer),
+                joinedload(Workout.coach),
+                selectinload(Workout.exercise_workouts).order_by(
+                    ExerciseWorkout.num_order
+                ),
+            )
+        )
+
         result = await session.execute(statement)
-        return result.scalar_one()
+        return result.scalars().all()
 
-    async def assign_coach_custoemer(
-        self, session: AsyncSession, customer_id: int, coach_id: int
-    ) -> Coach:
-        existing_relationship = await session.execute(
-            select(CoachesCustomers)
-            .where(CoachesCustomers.customer_id == customer_id)
-            .where(CoachesCustomers.coach_id == coach_id)
-        )
-        if existing_relationship.scalar_one_or_none() is not None:
-            raise EntityAlreadyExistsException(
-                "coach already assigned to to this customer"
-            )
-        customer_statement = (
-            select(Customer)
-            .where(Customer.id == customer_id)
-            .options(selectinload(Customer.coaches), joinedload(Customer.user))
-        )
-
-        customer_result = await session.execute(customer_statement)
-        customer = customer_result.scalar_one_or_none()
-        if customer is None:
-            raise EntityNotFoundException("customer with given id was not found")
-        coach_statement = (
-            select(Coach)
-            .where(Coach.id == coach_id)
-            .options(selectinload(Coach.customers), joinedload(Coach.user))
-        )
-        coach_result = await session.execute(coach_statement)
-
-        coach = coach_result.scalar_one_or_none()
-        if coach is None:
-            raise EntityNotFoundException("coach with given id was not found")
-        users = [customer.user, coach.user]
-
-        if coach not in customer.coaches:
-            customer.coaches.append(coach)
-
-        if customer not in coach.customers:
-            coach.customers.append(customer)
-
+    async def delete(self, session: AsyncSession, workout: Workout):
+        await session.delete(workout)
         await session.commit()
-        return users
+        return workout
 
-    async def unassign_coach_custoemer(
-        self, session: AsyncSession, customer_id: int, coach_id: int
-    ) -> Coach:
-        existing_relationship = await session.execute(
-            select(CoachesCustomers)
-            .where(CoachesCustomers.customer_id == customer_id)
-            .where(CoachesCustomers.coach_id == coach_id)
-        )
-        if existing_relationship.scalar_one_or_none() is None:
-            raise EntityAlreadyExistsException(
-                "coach is not assigned to to this customer yet"
-            )
-        customer_statement = (
-            select(Customer)
-            .where(Customer.id == customer_id)
-            .options(selectinload(Customer.coaches), joinedload(Customer.user))
-        )
-        customer_result = await session.execute(customer_statement)
-        customer = customer_result.scalar_one()
-        coach_statement = (
-            select(Coach)
-            .where(Coach.id == coach_id)
-            .options(selectinload(Coach.customers), joinedload(Coach.user))
-        )
 
-        coach_result = await session.execute(coach_statement)
-
-        coach = coach_result.scalar_one()
-        users = [customer.user, coach.user]
-
-        if coach in customer.coaches:
-            customer.coaches.remove(coach)
-
-        if customer in coach.customers:
-            coach.customers.remove(customer)
+class ExerciseWorkoutRepository:
+    async def save(self, session: AsyncSession, exercise_workout: ExerciseWorkout):
+        session.add(exercise_workout)
         await session.flush()
         await session.commit()
-        return users
+        return exercise_workout
 
-    async def save(self, session: AsyncSession, user: User):
-        session.add(user)
-        await session.flush()
-        await session.commit()
-        return user
+    async def get_by_id(self, session: AsyncSession, id: int):
+        statement = (
+            select(ExerciseWorkout)
+            .where(ExerciseWorkout.id == id)
+            .options(joinedload(ExerciseWorkout.workout))
+        )
+        result = await session.execute(statement)
+        return result.scalar_one_or_none()
 
-    async def delete(self, session: AsyncSession, user: User):
-        await session.delete(user)
+    async def delete(self, session: AsyncSession, exercise_workout: ExerciseWorkout):
+        await session.delete(exercise_workout)
         await session.commit()
-        return user
+        return exercise_workout
