@@ -22,7 +22,9 @@ class Chat(Base):
     users: Mapped[list["User"]] = relationship(
         "User", back_populates="chats", secondary="chats_users"
     )
-    messages: Mapped[list["Message"]] = relationship("Message", back_populates="chat")
+    messages: Mapped[list["Message"]] = relationship(
+        "Message", back_populates="chat", cascade="all, delete-orphan"
+    )
     type: Mapped[ChatType]
 
 

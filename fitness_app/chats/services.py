@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from fitness_app.chats.models import Chat
 from fitness_app.chats.repositories import ChatRepository
-from fitness_app.chats.schemas import ChatCreateSchema, ChatType
+from fitness_app.chats.schemas import ChatCreateSchema, ChatSchema, ChatType
 from fitness_app.core.exceptions import (
     BadRequestException,
     EntityNotFoundException,
@@ -40,7 +40,12 @@ class ChatService:
             return await self._chat_repository.save(session, chat)
         return await self.get_by_user_id(session, users[0], users[1].id)
 
-    async def get_by_chat_id(self, session: AsyncSession, user: User, chat_id: int):
+    async def get_by_chat_id(
+        self,
+        session: AsyncSession,
+        user: User,
+        chat_id: int,
+    ):
         chat = await self._chat_repository.get_with_users_by_chat_id(session, chat_id)
         if chat is None:
             raise EntityNotFoundException("Chat with given id was not found")
@@ -83,3 +88,12 @@ class ChatService:
                 UserSchema.model_validate(user) for user in chat_dict["users"]
             ]
         return PageSchema(total_items_count=total_chats_count, items=chat_dicts)
+
+    async def delete_by_id(
+        self, session: AsyncSession, user: User, chat_id: int
+    ) -> ChatSchema:
+        chat = await self.get_by_chat_id(session, user, chat_id)
+        schema = ChatSchema(**chat.__dict__)
+
+        await self._chat_repository.delete(session, chat)
+        return schema
