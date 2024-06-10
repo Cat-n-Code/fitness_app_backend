@@ -1,4 +1,4 @@
-from sqlalchemy import desc, or_, select
+from sqlalchemy import desc, null, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -26,8 +26,7 @@ class ExerciseRepository:
     ):
         statement = (
             select(Exercise)
-            # should be == None
-            .where(or_(Exercise.user_id == None, Exercise.user_id == user_id))
+            .where(or_(Exercise.user_id == null(), Exercise.user_id == user_id))
             .offset(page * size)
             .limit(size)
             .order_by(desc(Exercise.id))

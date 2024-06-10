@@ -26,6 +26,11 @@ workouts_router = APIRouter(prefix="/workouts", tags=["Тренировки"])
 @workouts_router.post(
     "",
     response_model=WorkoutSchema,
+    responses={
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Необходимо указать свой coach_id или customer_id"
+        }
+    },
     summary="Создание тренировки",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
@@ -71,7 +76,7 @@ async def get_workouts_by_user(
     size: SizeField = 10,
     date_start: Optional[date] = None,
     date_finish: Optional[date] = None,
-) -> WorkoutSchema:
+) -> list[WorkoutSchema]:
     return await service.get_workouts_by_user(
         session,
         user,
@@ -87,9 +92,12 @@ async def get_workouts_by_user(
     summary="Обновить тренировку по id",
     response_model=WorkoutSchema,
     responses={
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Нельзя изменять не вашу тренировку"
+        },
         status.HTTP_404_NOT_FOUND: {
-            "description": "Упражнения с указанным id не найдено"
-        }
+            "description": "Тренировки с указанным id не найдено"
+        },
     },
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
@@ -111,9 +119,12 @@ async def update_by_id(
     summary="Удаление задания по id",
     response_model=WorkoutSchema,
     responses={
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Нельзя изменять не вашу тренировку"
+        },
         status.HTTP_404_NOT_FOUND: {
             "description": "Упражнения с указанным id не найдено"
-        }
+        },
     },
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
@@ -129,6 +140,11 @@ async def delete_by_id(
 @workouts_router.post(
     "/exercises",
     response_model=ExerciseWorkoutCreateSchema,
+    responses={
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Необходимо указать свой coach_id или customer_id"
+        },
+    },
     summary="Создание упражнения для тренировки",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
@@ -146,9 +162,12 @@ async def create_exercise_workout(
     summary="Обновить упражнение для тренировки по id",
     response_model=ExerciseWorkoutSchema,
     responses={
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Нельзя изменять не вашу тренировку"
+        },
         status.HTTP_404_NOT_FOUND: {
             "description": "Упражнения для тренировки с указанным id не найдено"
-        }
+        },
     },
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
@@ -170,9 +189,12 @@ async def update_exercise_workout_by_id(
     summary="Удаление задания для тренировки по id",
     response_model=ExerciseWorkoutSchema,
     responses={
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Нельзя изменять не вашу тренировку"
+        },
         status.HTTP_404_NOT_FOUND: {
             "description": "Упражнения для тренировки с указанным id не найдено"
-        }
+        },
     },
     dependencies=[Depends(HasPermission(Authenticated()))],
 )

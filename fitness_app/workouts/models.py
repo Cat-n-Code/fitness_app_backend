@@ -5,7 +5,6 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fitness_app.core.db_manager import Base
-from fitness_app.workouts.schemas import TypeConnection
 
 if TYPE_CHECKING:
     from fitness_app.chats.models import Chat
@@ -36,7 +35,7 @@ class Workout(Base):
     coach_id: Mapped[int] = mapped_column(ForeignKey("coaches.id"), nullable=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=True)
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), nullable=True)
-    type_connection: Mapped[TypeConnection] = mapped_column(nullable=True)
+    type_connection: Mapped[str] = mapped_column(nullable=True)
     date_field: Mapped[date] = mapped_column(nullable=True)
     time_start: Mapped[datetime] = mapped_column(nullable=True)
 

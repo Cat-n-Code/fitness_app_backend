@@ -30,7 +30,8 @@ class ExerciseSchema(BaseModel):
     equipment: Optional[str] = None
     difficulty: Optional[Difficulty] = None
     description: Optional[str] = None
-    photos: Optional[list[FileEntitySchema]] = None
+
+    photos: Optional[list[FileEntitySchema]] = []
 
 
 class ExerciseCreateSchema(BaseModel):

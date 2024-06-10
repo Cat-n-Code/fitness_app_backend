@@ -54,6 +54,7 @@ class ExerciseService:
     async def update_by_id(
         self,
         session: AsyncSession,
+        user_id: int,
         schema: ExerciseUpdateSchema,
         photos: list[UploadFile],
     ):
@@ -62,6 +63,8 @@ class ExerciseService:
             raise EntityNotFoundException("Упражнения с указанным id не найдено")
         if not exercise.user_id:
             raise ForbiddenException("Отказано в доступе")
+        if exercise.user_id != user_id:
+            raise ForbiddenException("Можно изменять только свои упражнения")
 
         update_model_by_schema(exercise, schema)
         exercise = await self._exercise_repository.save(session, exercise)
@@ -76,12 +79,14 @@ class ExerciseService:
         await session.refresh(exercise)
         return exercise
 
-    async def delete_by_id(self, session: AsyncSession, id: int):
+    async def delete_by_id(self, session: AsyncSession, user_id: int, id: int):
         exercise = await self._exercise_repository.get_by_id(session, id)
         if not exercise:
             raise EntityNotFoundException("Упражнения с указанным id не найдено")
         if not exercise.user_id:
             raise ForbiddenException("Отказано в доступе")
+        if exercise.user_id != user_id:
+            raise ForbiddenException("Можно изменять только свои упражнения")
 
         if exercise.photos:
             for i in range(len(exercise.photos)):

@@ -8,7 +8,7 @@ from fitness_app.core.db_manager import Base
 if TYPE_CHECKING:
     from fitness_app.file_entities.models import FileEntity
     from fitness_app.users.models import User
-    from fitness_app.workouts.schemas import ExerciseWorkout
+    from fitness_app.workouts.models import ExerciseWorkout
 
 
 class Exercise(Base):

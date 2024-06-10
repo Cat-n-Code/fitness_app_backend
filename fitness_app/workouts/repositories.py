@@ -1,10 +1,12 @@
 from datetime import date
 from typing import Optional
 
-from sqlalchemy import desc, select
+from sqlalchemy import and_, desc, null, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
+from fitness_app.chats.models import Chat
+from fitness_app.exercises.models import Exercise
 from fitness_app.workouts.models import ExerciseWorkout, Workout
 
 
@@ -22,20 +24,21 @@ class WorkoutRepository:
             .options(
                 joinedload(Workout.customer),
                 joinedload(Workout.coach),
+                joinedload(Workout.chat).options(selectinload(Chat.users)),
                 selectinload(Workout.exercise_workouts).options(
-                    joinedload(ExerciseWorkout.exercise)
+                    joinedload(ExerciseWorkout.exercise).options(
+                        selectinload(Exercise.photos)
+                    ),
+                    joinedload(ExerciseWorkout.workout),
                 ),
             )
         )
 
-        exercise_workouts_exist = await session.execute(
-            select(ExerciseWorkout).where(ExerciseWorkout.workout_id == id)
-        )
-        if exercise_workouts_exist.scalars().first() is not None:
-            statement = statement.order_by(ExerciseWorkout.num_order)
-
         result = await session.execute(statement)
-        return result.scalar_one_or_none()
+        workout = result.scalar_one_or_none()
+        if workout and workout.exercise_workouts:
+            workout.exercise_workouts.sort(key=lambda workout: workout.num_order)
+        return workout
 
     async def get_workouts_by_coach_id(
         self,
@@ -46,27 +49,39 @@ class WorkoutRepository:
         date_start: Optional[date] = None,
         date_finish: Optional[date] = None,
     ):
-        statement = select(Workout).where(Workout.coach_id == coach_id)
+        statement = select(Workout).where(
+            or_(
+                Workout.coach_id == coach_id,
+                and_(Workout.coach_id == null(), Workout.customer_id == null()),
+            )
+        )
         if date_start:
             statement = statement.where(Workout.date_field >= date_start)
         if date_finish:
             statement = statement.where(Workout.date_field <= date_finish)
         statement = (
-            statement.order_by(desc(Workout.date_field))
-            .offset(page * size)
+            statement.offset(page * size)
             .limit(size)
+            .order_by(desc(Workout.date_field))
             .options(
                 joinedload(Workout.customer),
                 joinedload(Workout.coach),
+                joinedload(Workout.chat).options(selectinload(Chat.users)),
                 selectinload(Workout.exercise_workouts).options(
-                    joinedload(ExerciseWorkout.exercise)
+                    joinedload(ExerciseWorkout.exercise).options(
+                        selectinload(Exercise.photos)
+                    ),
+                    joinedload(ExerciseWorkout.workout),
                 ),
             )
-            .order_by(ExerciseWorkout.num_order)
         )
 
         result = await session.execute(statement)
-        return result.scalars().all()
+        workouts = result.scalars().all()
+        for workout in workouts:
+            if workout.exercise_workouts:
+                workout.exercise_workouts.sort(key=lambda workout: workout.num_order)
+        return workouts
 
     async def get_workouts_by_customer_id(
         self,
@@ -77,26 +92,46 @@ class WorkoutRepository:
         date_start: Optional[date] = None,
         date_finish: Optional[date] = None,
     ):
-        statement = select(Workout).where(Workout.customer_id == customer_id)
+        statement = select(Workout).where(
+            or_(
+                Workout.customer_id == customer_id,
+                and_(Workout.coach_id == null(), Workout.customer_id == null()),
+            )
+        )
         if date_start:
             statement = statement.where(Workout.date_field >= date_start)
         if date_finish:
             statement = statement.where(Workout.date_field <= date_finish)
         statement = (
-            statement.order_by(desc(Workout.date_field))
-            .offset(page * size)
+            statement.offset(page * size)
             .limit(size)
+            .order_by(desc(Workout.date_field))
             .options(
                 joinedload(Workout.customer),
                 joinedload(Workout.coach),
-                selectinload(Workout.exercise_workouts).order_by(
-                    ExerciseWorkout.num_order
+                joinedload(Workout.chat).options(selectinload(Chat.users)),
+                selectinload(Workout.exercise_workouts).options(
+                    joinedload(ExerciseWorkout.exercise).options(
+                        selectinload(Exercise.photos)
+                    ),
+                    joinedload(ExerciseWorkout.workout),
                 ),
             )
         )
 
         result = await session.execute(statement)
-        return result.scalars().all()
+        workouts = result.scalars().all()
+        for workout in workouts:
+            if workout.exercise_workouts:
+                workout.exercise_workouts.sort(key=lambda workout: workout.num_order)
+        return workouts
+
+    async def update(self, session: AsyncSession, workout: Workout):
+        session.add(workout)
+        await session.flush()
+        await session.commit()
+        await session.refresh(workout)
+        return workout
 
     async def delete(self, session: AsyncSession, workout: Workout):
         await session.delete(workout)
@@ -115,10 +150,22 @@ class ExerciseWorkoutRepository:
         statement = (
             select(ExerciseWorkout)
             .where(ExerciseWorkout.id == id)
-            .options(joinedload(ExerciseWorkout.workout))
+            .options(
+                joinedload(ExerciseWorkout.exercise).options(
+                    selectinload(Exercise.photos)
+                ),
+                joinedload(ExerciseWorkout.workout),
+            )
         )
         result = await session.execute(statement)
         return result.scalar_one_or_none()
+
+    async def update(self, session: AsyncSession, exercise_workout: ExerciseWorkout):
+        session.add(exercise_workout)
+        await session.flush()
+        await session.commit()
+        await session.refresh(exercise_workout)
+        return exercise_workout
 
     async def delete(self, session: AsyncSession, exercise_workout: ExerciseWorkout):
         await session.delete(exercise_workout)

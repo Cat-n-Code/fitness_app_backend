@@ -4,8 +4,10 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
+from fitness_app.chats.schemas import ChatSchema
 from fitness_app.coaches.schemas import CoachSchema
 from fitness_app.customers.schemas import CustomerSchema
+from fitness_app.exercises.schemas import ExerciseSchema
 
 
 class TypeConnection(StrEnum):
@@ -24,6 +26,8 @@ class ExerciseWorkoutSchema(BaseModel):
     num_sets_done: int
     num_reps: Optional[int] = None
 
+    exercise: Optional["ExerciseSchema"] = None
+
 
 class ExerciseWorkoutCreateSchema(BaseModel):
     exercise_id: int
@@ -37,7 +41,6 @@ class ExerciseWorkoutCreateSchema(BaseModel):
 class ExerciseWorkoutUpdateSchema(BaseModel):
     id: int
     exercise_id: int
-    workout_id: int
     num_order: int
     num_sets: Optional[int] = None
     num_sets_done: Optional[int] = None
@@ -58,6 +61,7 @@ class WorkoutSchema(BaseModel):
     exercise_workouts: Optional[list["ExerciseWorkoutSchema"]] = []
     customer: Optional["CustomerSchema"] = None
     coach: Optional["CoachSchema"] = None
+    chat: Optional["ChatSchema"] = None
 
 
 class WorkoutCreateSchema(BaseModel):
@@ -69,6 +73,7 @@ class WorkoutCreateSchema(BaseModel):
 
 
 class WorkoutUpdateSchema(BaseModel):
+    id: int
     type_connection: Optional[TypeConnection] = None
     date_field: Optional[date] = None
     time_start: Optional[datetime] = None

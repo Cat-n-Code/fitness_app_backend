@@ -1,5 +1,6 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from fitness_app.coaches.models import Coach
 from fitness_app.customers.models import Customer
@@ -30,6 +31,19 @@ class CustomerRepository:
         )
         result = await session.execute(statement)
         return result.scalars().all()
+
+    async def get_by_id(
+        self,
+        session: AsyncSession,
+        customer_id: int,
+    ):
+        statement = (
+            select(Customer)
+            .where(Customer.id == customer_id)
+            .options(joinedload(Customer.user))
+        )
+        result = await session.execute(statement)
+        return result.scalar_one_or_none()
 
     async def count_all(
         self,

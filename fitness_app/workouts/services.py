@@ -59,14 +59,21 @@ class WorkoutService:
         workout = Workout(**schema.model_dump())
         workout.exercise_workouts = []
 
-        if schema.coach_id and schema.customer_id:
-            coach = await self._coach_service.get_by_id(session, schema.coach_id)
-            customer = await self._customer_service.get_by_id(
+        if schema.coach_id:
+            workout.coach = await self._coach_service.get_by_id(
+                session, schema.coach_id
+            )
+
+        if schema.customer_id:
+            workout.customer = await self._customer_service.get_by_id(
                 session, schema.customer_id
             )
-            users = [coach.user, customer.user]
-            chat = await self._chat_service.create(session, users, ChatType.DIALOGUE)
-            workout.chat_id = chat.id
+
+        if schema.coach_id and schema.customer_id:
+            users = [workout.coach.user, workout.customer.user]
+            workout.chat = await self._chat_service.create(
+                session, users, ChatType.DIALOGUE
+            )
 
         return await self._workout_repository.save(session, workout)
 
@@ -103,13 +110,13 @@ class WorkoutService:
         workout = await self._workout_repository.get_by_id(session, schema.id)
         if not workout:
             raise EntityNotFoundException("Тренировки с указанным id не найдено")
-        if (user.role == Role.COACH and user.coach_info.id != schema.coach_id) or (
-            user.role == Role.CUSTOMER and user.customer_info.id != schema.customer_id
+        if (user.role == Role.COACH and user.coach_info.id != workout.coach_id) or (
+            user.role == Role.CUSTOMER and user.customer_info.id != workout.customer_id
         ):
-            raise ForbiddenException("Необходимо указать свой coach_id или customer_id")
+            raise ForbiddenException("Нельзя изменять не вашу тренировку")
 
         update_model_by_schema(workout, schema)
-        return await self._workout_repository.save(session, workout)
+        return await self._workout_repository.update(session, workout)
 
     async def delete_by_id(self, session: AsyncSession, user: User, id: int):
         workout = await self._workout_repository.get_by_id(session, id)
@@ -118,11 +125,10 @@ class WorkoutService:
         if (user.role == Role.COACH and user.coach_info.id != workout.coach_id) or (
             user.role == Role.CUSTOMER and user.customer_info.id != workout.customer_id
         ):
-            raise ForbiddenException("Необходимо указать свой coach_id или customer_id")
+            raise ForbiddenException("Нельзя изменять не вашу тренировку")
 
-        # TODO delete chat
-        # if workout.chat_id:
-        #     await self._chat_service.delete_by_id(session, workout.chat_id)
+        if workout.chat_id:
+            await self._chat_service.delete_by_id(session, workout.chat_id)
 
         return await self._workout_repository.delete(session, workout)
 
@@ -173,10 +179,10 @@ class ExerciseWorkoutService:
             user.role == Role.CUSTOMER
             and user.customer_info.id != exercise_workout.workout.customer_id
         ):
-            raise ForbiddenException("Необходимо указать свой coach_id или customer_id")
+            raise ForbiddenException("Нельзя изменять не вашу тренировку")
 
         update_model_by_schema(exercise_workout, schema)
-        return await self._exercise_workout_repository.save(session, exercise_workout)
+        return await self._exercise_workout_repository.update(session, exercise_workout)
 
     async def delete_by_id(self, session: AsyncSession, user: User, id: int):
         exercise_workout = await self._exercise_workout_repository.get_by_id(
@@ -195,6 +201,6 @@ class ExerciseWorkoutService:
             user.role == Role.CUSTOMER
             and user.customer_info.id != exercise_workout.workout.customer_id
         ):
-            raise ForbiddenException("Необходимо указать свой coach_id или customer_id")
+            raise ForbiddenException("Нельзя изменять не вашу тренировку")
 
         return await self._exercise_workout_repository.delete(session, exercise_workout)

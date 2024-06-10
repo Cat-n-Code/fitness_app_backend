@@ -86,7 +86,7 @@ class CustomerService:
         )
 
     async def get_by_id(self, session: AsyncSession, customer_id: int):
-        customer = await session.get(Customer, customer_id)
+        customer = await self._customer_repository.get_by_id(session, customer_id)
         if customer is None:
             raise EntityNotFoundException("Customer with given id was not found")
 
