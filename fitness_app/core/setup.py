@@ -25,6 +25,9 @@ from fitness_app.core.settings import AppSettings
 from fitness_app.customers.repositories import CustomerRepository
 from fitness_app.customers.routers import customers_router
 from fitness_app.customers.services import CustomerService
+from fitness_app.diaries.repositories import DiaryRepository
+from fitness_app.diaries.routers import diaries_router
+from fitness_app.diaries.services import DiaryService
 from fitness_app.exercises.repositories import ExerciseRepository
 from fitness_app.exercises.routers import exercises_router
 from fitness_app.exercises.services import ExerciseService
@@ -34,6 +37,9 @@ from fitness_app.file_entities.services import FileEntityService
 from fitness_app.messages.repositories import MessageRepository
 from fitness_app.messages.routers import messages_router
 from fitness_app.messages.services import MessageService
+from fitness_app.steps.repositories import StepsRepository
+from fitness_app.steps.routers import steps_router
+from fitness_app.steps.services import StepsService
 from fitness_app.users.repositories import UserRepository
 from fitness_app.users.routers import users_router
 from fitness_app.users.services import UserService
@@ -87,6 +93,8 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     app.include_router(messages_router)
     app.include_router(exercises_router)
     app.include_router(workouts_router)
+    app.include_router(steps_router)
+    app.include_router(diaries_router)
 
     """ Setup exception handlers """
     app.add_exception_handler(AppException, handle_app_exception)
@@ -108,6 +116,8 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     customer_repository = CustomerRepository()
     message_repository = MessageRepository()
     chat_repository = ChatRepository()
+    steps_repository = StepsRepository()
+    diary_repository = DiaryRepository()
 
     password_service = PasswordService()
     password_service = PasswordService()
@@ -140,6 +150,8 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     )
     exercise_service = ExerciseService(exercise_repository, file_entity_service)
     message_service = MessageService(message_repository, chat_service)
+    steps_service = StepsService(steps_repository, settings.default_steps_goal)
+    diary_service = DiaryService(diary_repository)
 
     app.state.workout_service = workout_service
     app.state.exercise_workout_service = exercise_workout_service
@@ -151,6 +163,8 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     app.state.customer_service = customer_service
     app.state.chat_service = chat_service
     app.state.message_service = message_service
+    app.state.steps_service = steps_service
+    app.state.diary_service = diary_service
 
 
 @asynccontextmanager

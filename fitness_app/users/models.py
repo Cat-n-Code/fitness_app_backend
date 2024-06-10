@@ -13,6 +13,8 @@ from fitness_app.users.schemas import Role, Sex
 
 if TYPE_CHECKING:
     from fitness_app.chats.models import Chat
+    from fitness_app.diaries.models import DiaryEntry
+    from fitness_app.steps.models import StepsEntry
 
 
 class User(Base):
@@ -37,6 +39,12 @@ class User(Base):
     coach_info: Mapped[Optional["Coach"]] = relationship("Coach", back_populates="user")
     chats: Mapped[list["Chat"]] = relationship(
         "Chat", back_populates="users", secondary="chats_users"
+    )
+    steps_entries: Mapped[list["StepsEntry"]] = relationship(
+        "StepsEntry", back_populates="user"
+    )
+    diaries: Mapped[list["DiaryEntry"]] = relationship(
+        "DiaryEntry", back_populates="user"
     )
 
     __table_args__ = (UniqueConstraint(email),)
