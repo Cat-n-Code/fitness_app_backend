@@ -29,7 +29,7 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.file_entities (
     id integer NOT NULL,
-    exercise_id integer NOT NULL,
+    exercise_id integer NULL,
     filename character varying NOT NULL
 );
 
