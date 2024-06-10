@@ -28,7 +28,16 @@ class DatabaseManager:
             raise
 
         """Import all used models"""
+        from fitness_app.chats.models import Chat
+        from fitness_app.coaches.models import Coach
+        from fitness_app.customers.models import Customer
+        from fitness_app.diaries.models import DiaryEntry
+        from fitness_app.exercises.models import Exercise
+        from fitness_app.file_entities.models import FileEntity
+        from fitness_app.messages.models import Message
+        from fitness_app.steps.models import StepsEntry
         from fitness_app.users.models import User
+        from fitness_app.workouts.models import Workout
 
         async with self._engine.begin() as connection:
             try:

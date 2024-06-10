@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path
 
 from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
-from fitness_app.auth.permissions import Authenticated, IsCustomer
+from fitness_app.auth.permissions import IsCustomer
 from fitness_app.core.dependencies import CustomerServiceDep, DbSession
 from fitness_app.core.schemas import PageSchema
 from fitness_app.core.utils import IdField, PageField, SizeField
@@ -143,29 +143,3 @@ async def unassign_coach(
 ):
     coach = await service.unassign_coach(session, user, coach_id)
     return UserSchema.model_validate(coach)
-
-
-@customers_router.get(
-    "/workouts",
-    response_model=None,
-    summary="Получение своих тренеровок (НЕ ГОТОВО)",
-    dependencies=[Depends(HasPermission(Authenticated()))],
-)
-async def get_workout(
-    user: AuthenticateUser,
-    session: DbSession,
-):
-    return None
-
-
-@customers_router.post(
-    "/status",
-    response_model=None,
-    summary="Изменение прогресса задания (НЕ ГОТОВО)",
-    dependencies=[Depends(HasPermission(Authenticated()))],
-)
-async def set_exercise_status(
-    user: AuthenticateUser,
-    session: DbSession,
-):
-    return None
