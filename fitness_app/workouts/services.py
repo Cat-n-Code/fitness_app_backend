@@ -71,8 +71,8 @@ class WorkoutService:
 
         if schema.coach_id and schema.customer_id:
             users = [workout.coach.user, workout.customer.user]
-            workout.chat = await self._chat_service.create(
-                session, users, ChatType.DIALOGUE
+            workout.chat = await self._chat_service.create_new(
+                session, users, ChatType.WORKOUT
             )
 
         return await self._workout_repository.save(session, workout)
@@ -128,7 +128,7 @@ class WorkoutService:
             raise ForbiddenException("Нельзя изменять не вашу тренировку")
 
         if workout.chat_id:
-            await self._chat_service.delete_by_id(session, workout.chat_id)
+            await self._chat_service.delete_by_id(session, user, workout.chat_id)
 
         return await self._workout_repository.delete(session, workout)
 

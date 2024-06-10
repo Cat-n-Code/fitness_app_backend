@@ -116,14 +116,14 @@ async def update_by_id(
 
 @workouts_router.delete(
     "/{id}",
-    summary="Удаление задания по id",
+    summary="Удаление тренировки по id",
     response_model=WorkoutSchema,
     responses={
         status.HTTP_403_FORBIDDEN: {
             "description": "Нельзя изменять не вашу тренировку"
         },
         status.HTTP_404_NOT_FOUND: {
-            "description": "Упражнения с указанным id не найдено"
+            "description": "Тренировки с указанным id не найдено"
         },
     },
     dependencies=[Depends(HasPermission(Authenticated()))],
