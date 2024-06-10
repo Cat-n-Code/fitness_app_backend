@@ -6,8 +6,8 @@ import os
 
 import requests
 
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTc3NjIwMzgsInVzZXJfaWQiOjF9.Pi9w-pj7-obiq78W9UgUXHUgnlE6A4c6ECgKKjiNxus"
-headers = {"Authorization": f"Bearer {token}"}
+user_auth_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTc3NjIwMzgsInVzZXJfaWQiOjF9.Pi9w-pj7-obiq78W9UgUXHUgnlE6A4c6ECgKKjiNxus"
+headers = {"Authorization": f"Bearer {user_auth_token}"}
 url = "http://localhost:8080/exercises/"
 
 current_directory = os.getcwd()

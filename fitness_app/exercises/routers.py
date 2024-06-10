@@ -57,11 +57,6 @@ async def get_by_id(
 @exercises_router.get(
     "/users/current",
     response_model=list[ExerciseSchema],
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "description": "Упражнения с указанным id не найдено"
-        }
-    },
     summary="Получение заданий текущего пользователя",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
@@ -80,19 +75,23 @@ async def get_by_user_id(
     summary="Обновить задание",
     response_model=ExerciseSchema,
     responses={
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Можно изменять только свои упражнения"
+        },
         status.HTTP_404_NOT_FOUND: {
             "description": "Упражнения с указанным id не найдено"
-        }
+        },
     },
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def update_by_id(
     session: DbSession,
     service: ExerciseServiceDep,
+    user: AuthenticateUser,
     schema: Json[ExerciseUpdateSchema],
     photos: list[UploadFile],
 ) -> ExerciseSchema:
-    return await service.update_by_id(session, schema, photos)
+    return await service.update_by_id(session, user.id, schema, photos)
 
 
 @exercises_router.delete(
@@ -100,13 +99,19 @@ async def update_by_id(
     summary="Удаление задания по id",
     response_model=ExerciseSchema,
     responses={
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Можно изменять только свои упражнения"
+        },
         status.HTTP_404_NOT_FOUND: {
             "description": "Упражнения с указанным id не найдено"
-        }
+        },
     },
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def delete_by_id(
-    session: DbSession, service: ExerciseServiceDep, id: Annotated[int, Path]
+    session: DbSession,
+    service: ExerciseServiceDep,
+    user: AuthenticateUser,
+    id: Annotated[int, Path],
 ) -> ExerciseSchema:
-    return await service.delete_by_id(session, id)
+    return await service.delete_by_id(session, user.id, id)

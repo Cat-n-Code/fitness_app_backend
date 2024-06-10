@@ -40,6 +40,19 @@ class ChatService:
             return await self._chat_repository.save(session, chat)
         return await self.get_by_user_id(session, users[0], users[1].id)
 
+    async def create_new(
+        self,
+        session: AsyncSession,
+        users: list,
+        type: ChatType = ChatType.WORKOUT,
+    ):
+        chat_create_schema = ChatCreateSchema(type=type)
+        chat = Chat(**chat_create_schema.model_dump())
+        chat.users = users
+        chat.messages = []
+
+        return await self._chat_repository.save(session, chat)
+
     async def get_by_chat_id(
         self,
         session: AsyncSession,

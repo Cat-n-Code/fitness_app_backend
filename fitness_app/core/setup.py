@@ -37,8 +37,12 @@ from fitness_app.messages.services import MessageService
 from fitness_app.users.repositories import UserRepository
 from fitness_app.users.routers import users_router
 from fitness_app.users.services import UserService
-from fitness_app.workout_templates.routers import workout_templates_router
+from fitness_app.workouts.repositories import (
+    ExerciseWorkoutRepository,
+    WorkoutRepository,
+)
 from fitness_app.workouts.routers import workouts_router
+from fitness_app.workouts.services import ExerciseWorkoutService, WorkoutService
 
 
 def create_app(settings: AppSettings | None = None) -> FastAPI:
@@ -74,6 +78,7 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     """ Setup routers """
     app.include_router(auth_router)
     app.include_router(users_router)
+    app.include_router(workouts_router)
     app.include_router(exercises_router)
     app.include_router(file_entities_router)
     app.include_router(customers_router)
@@ -82,7 +87,6 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     app.include_router(messages_router)
     app.include_router(exercises_router)
     app.include_router(workouts_router)
-    app.include_router(workout_templates_router)
 
     """ Setup exception handlers """
     app.add_exception_handler(AppException, handle_app_exception)
@@ -95,6 +99,8 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     app.state.settings = settings
     app.state.database_manager = DatabaseManager(settings.db_url)
 
+    workout_repository = WorkoutRepository()
+    exercise_workout_repository = ExerciseWorkoutRepository()
     user_repository = UserRepository()
     file_entity_repository = FileEntityRepository()
     exercise_repository = ExerciseRepository()
@@ -103,6 +109,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     message_repository = MessageRepository()
     chat_repository = ChatRepository()
 
+    password_service = PasswordService()
     password_service = PasswordService()
     token_service = TokenService(
         settings.auth_token_secret_key, settings.auth_token_lifetime
@@ -125,9 +132,17 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     customer_service = CustomerService(
         customer_repository, user_repository, user_service, chat_service
     )
+    workout_service = WorkoutService(
+        workout_repository, chat_service, coach_service, customer_service
+    )
+    exercise_workout_service = ExerciseWorkoutService(
+        workout_service, exercise_workout_repository
+    )
     exercise_service = ExerciseService(exercise_repository, file_entity_service)
     message_service = MessageService(message_repository, chat_service)
 
+    app.state.workout_service = workout_service
+    app.state.exercise_workout_service = exercise_workout_service
     app.state.auth_service = auth_service
     app.state.user_service = user_service
     app.state.file_entity_service = file_entity_service

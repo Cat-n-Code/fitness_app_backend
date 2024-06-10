@@ -10,6 +10,7 @@ from fitness_app.users.models import User
 
 if TYPE_CHECKING:
     from fitness_app.messages.models import Message
+    from fitness_app.workouts.models import Workout
 
 
 class Chat(Base):
@@ -19,6 +20,7 @@ class Chat(Base):
         default=datetime.now, server_default=func.now()
     )
 
+    workout: Mapped["Workout"] = relationship(back_populates="chat")
     users: Mapped[list["User"]] = relationship(
         "User", back_populates="chats", secondary="chats_users"
     )

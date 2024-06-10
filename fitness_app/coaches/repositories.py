@@ -1,5 +1,6 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from fitness_app.coaches.models import Coach
 from fitness_app.customers.models import Customer
@@ -28,6 +29,17 @@ class CoachRepository:
         statement = select(Coach).order_by(Coach.id).offset(page * size).limit(size)
         result = await session.execute(statement)
         return result.scalars().all()
+
+    async def get_by_id(
+        self,
+        session: AsyncSession,
+        coach_id: int,
+    ):
+        statement = (
+            select(Coach).where(Coach.id == coach_id).options(joinedload(Coach.user))
+        )
+        result = await session.execute(statement)
+        return result.scalar_one_or_none()
 
     async def get_coaches_by_id(
         self,

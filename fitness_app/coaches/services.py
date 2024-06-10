@@ -66,7 +66,7 @@ class CoachService:
         return user.coach_info
 
     async def get_by_id(self, session: AsyncSession, coach_id: int):
-        coach = await session.get(Coach, coach_id)
+        coach = await self._coach_repository.get_by_id(session, coach_id)
         if coach is None:
             raise EntityNotFoundException("Coach with given id was not found")
 

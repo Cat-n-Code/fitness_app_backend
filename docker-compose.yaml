@@ -41,6 +41,12 @@ services:
       - type: bind
         source: ./db/file_entities.sql
         target: /docker-entrypoint-initdb.d/file_entities.sql
+      - type: bind
+        source: ./db/workouts.sql
+        target: /docker-entrypoint-initdb.d/workouts.sql
+      - type: bind
+        source: ./db/exercise_workouts.sql
+        target: /docker-entrypoint-initdb.d/exercise_workouts.sql
     environment:
       POSTGRES_DB: $POSTGRES_DATABASE
       POSTGRES_USER_FILE: "/run/secrets/db_user"

@@ -12,6 +12,7 @@ from fitness_app.exercises.services import ExerciseService
 from fitness_app.file_entities.services import FileEntityService
 from fitness_app.messages.services import MessageService
 from fitness_app.users.services import UserService
+from fitness_app.workouts.services import ExerciseWorkoutService, WorkoutService
 
 
 def db_manager(request: Request) -> DatabaseManager:
@@ -29,6 +30,14 @@ def auth_service(request: Request) -> AuthService:
 
 def user_service(request: Request) -> UserService:
     return request.app.state.user_service
+
+
+def workout_service(request: Request) -> WorkoutService:
+    return request.app.state.workout_service
+
+
+def exercise_workout_service(request: Request) -> ExerciseWorkoutService:
+    return request.app.state.exercise_workout_service
 
 
 def file_entity_service(request: Request) -> FileEntityService:
@@ -58,6 +67,8 @@ def chat_service(request: Request) -> ChatService:
 DbSession = Annotated[AsyncSession, Depends(db_session)]
 AuthServiceDep = Annotated[AuthService, Depends(auth_service)]
 UserServiceDep = Annotated[UserService, Depends(user_service)]
+WorkoutServiceDep = Annotated[UserService, Depends(workout_service)]
+ExerciseWorkoutServiceDep = Annotated[UserService, Depends(exercise_workout_service)]
 FileEntityServiceDep = Annotated[FileEntityService, Depends(file_entity_service)]
 ExerciseServiceDep = Annotated[ExerciseService, Depends(exercise_service)]
 CoachServiceDep = Annotated[CoachService, Depends(coach_service)]
