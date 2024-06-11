@@ -1,5 +1,6 @@
 import os
 import uuid
+from urllib.parse import urljoin
 
 import boto3
 from botocore.exceptions import ClientError
@@ -69,7 +70,7 @@ class FileEntityService:
                 "FileEntity with given filename was not found"
             )
 
-        full_url = self._aws_access_domain_name + filename
+        full_url = urljoin(self._aws_access_domain_name, filename)
         return full_url
 
     async def delete_by_id(self, session: AsyncSession, id: int):

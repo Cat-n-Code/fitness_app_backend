@@ -60,7 +60,7 @@ class ExerciseUpdateSchema(BaseModel):
 
 
 class ExerciseFindSchema(BaseModel):
-    name: str
+    name: Optional[str] = None
     muscle: Optional[str] = None
     additionalMuscle: Optional[str] = None
     type: Optional[ExerciseType] = None

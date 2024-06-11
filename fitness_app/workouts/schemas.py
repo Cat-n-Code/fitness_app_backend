@@ -83,6 +83,7 @@ class WorkoutUpdateSchema(BaseModel):
 
 
 class WorkoutFindSchema(BaseModel):
-    name: str
+    name: Optional[str] = None
     type_connection: Optional[TypeConnection] = None
-    time_start: Optional[datetime] = None
+    from_time_start: Optional[datetime] = None
+    to_time_start: Optional[datetime] = None

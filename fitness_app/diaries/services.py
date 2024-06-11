@@ -19,8 +19,8 @@ class DiaryService:
         diaries = await self._diary_repository.get_by_dates(
             session, user_id, date_start, date_finish
         )
-        if diaries == []:
-            raise EntityNotFoundException("The diaries with given dates was not found")
+        if not diaries:
+            raise EntityNotFoundException("Дневники за данный период не были найдены")
 
         return diaries
 

@@ -1,6 +1,6 @@
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Path, UploadFile, status
+from fastapi import APIRouter, Depends, Path, Query, UploadFile, status
 from pydantic import Json
 
 from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
@@ -8,11 +8,34 @@ from fitness_app.auth.permissions import Authenticated
 from fitness_app.core.dependencies import DbSession, ExerciseServiceDep
 from fitness_app.core.utils import PageField, SizeField
 from fitness_app.exercises.schemas import (
+    Difficulty,
     ExerciseCreateSchema,
     ExerciseFindSchema,
     ExerciseSchema,
+    ExerciseType,
     ExerciseUpdateSchema,
 )
+
+
+def get_exercise_find_schema(
+    name: Optional[str] = Query(None),
+    muscle: Optional[str] = Query(None),
+    additionalMuscle: Optional[str] = Query(None),
+    type: Optional[ExerciseType] = Query(None),
+    equipment: Optional[str] = Query(None),
+    difficulty: Optional[Difficulty] = Query(None),
+    description: Optional[str] = Query(None),
+) -> ExerciseFindSchema:
+    return ExerciseFindSchema(
+        name=name,
+        muscle=muscle,
+        additionalMuscle=additionalMuscle,
+        type=type,
+        equipment=equipment,
+        difficulty=difficulty,
+        description=description,
+    )
+
 
 exercises_router = APIRouter(prefix="/exercises", tags=["Упражнения"])
 
@@ -65,7 +88,7 @@ async def get_by_user_id(
     session: DbSession,
     service: ExerciseServiceDep,
     user_id: Annotated[int, Path],
-    find_schema: Optional[ExerciseFindSchema] = None,
+    find_schema: Optional[ExerciseFindSchema] = Depends(get_exercise_find_schema),
     page: PageField = 0,
     size: SizeField = 10,
 ) -> list[ExerciseSchema]:

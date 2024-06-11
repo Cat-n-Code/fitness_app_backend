@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional
 
-from sqlalchemy import and_, desc, null, or_, select
+from sqlalchemy import and_, null, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -52,38 +52,48 @@ class WorkoutRepository:
         date_start: Optional[date] = None,
         date_finish: Optional[date] = None,
     ):
+        statement = select(Workout)
+
         if coach_id:
-            statement = select(Workout).where(
+            statement = statement.where(
                 or_(
                     Workout.coach_id == coach_id,
                     and_(Workout.coach_id == null(), Workout.customer_id == null()),
                 )
             )
         elif customer_id:
-            statement = select(Workout).where(
+            statement = statement.where(
                 or_(
                     Workout.customer_id == customer_id,
                     and_(Workout.coach_id == null(), Workout.customer_id == null()),
                 )
             )
+
         if date_start:
             statement = statement.where(Workout.date_field >= date_start)
         if date_finish:
             statement = statement.where(Workout.date_field <= date_finish)
+
         if find_schema:
-            statement = statement.where(Workout.name == find_schema.name)
+            if find_schema.name:
+                statement = statement.where(Workout.name.contains(find_schema.name))
             if find_schema.type_connection:
                 statement = statement.where(
-                    Workout.type_connection == find_schema.type_connection
+                    Workout.type_connection.contains(find_schema.type_connection)
                 )
-            if find_schema.time_start:
+            if find_schema.from_time_start:
                 statement = statement.where(
-                    Workout.time_start == find_schema.time_start
+                    Workout.time_start >= find_schema.from_time_start
                 )
+            if find_schema.to_time_start:
+                statement = statement.where(
+                    Workout.time_start <= find_schema.to_time_start
+                )
+
         statement = (
             statement.offset(page * size)
             .limit(size)
-            .order_by(desc(Workout.date_field))
+            .order_by(Workout.date_field, Workout.time_start)
             .options(
                 joinedload(Workout.customer),
                 joinedload(Workout.coach),
@@ -102,6 +112,7 @@ class WorkoutRepository:
         for workout in workouts:
             if workout.exercise_workouts:
                 workout.exercise_workouts.sort(key=lambda workout: workout.num_order)
+
         return workouts
 
     async def update(self, session: AsyncSession, workout: Workout):

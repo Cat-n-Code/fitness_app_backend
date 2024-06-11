@@ -7,16 +7,16 @@ from fitness_app.auth.permissions import Authenticated
 from fitness_app.core.dependencies import DbSession, WaterEntryServiceDep
 from fitness_app.water_entries.schemas import WaterEntryCreateSchema, WaterEntrySchema
 
-water_entries_router = APIRouter(prefix="/waters", tags=["Waters"])
+water_entries_router = APIRouter(prefix="/waters", tags=["Вода"])
 
 
 @water_entries_router.get(
     "",
-    summary="Get water volume for a specific period",
+    summary="Получить водные сущности за определенный период",
     response_model=list[WaterEntrySchema],
     responses={
         status.HTTP_404_NOT_FOUND: {
-            "description": "The water entity with given dates was not found"
+            "description": "Сущность воды с указанными датами не была найдена"
         },
     },
     dependencies=[Depends(HasPermission(Authenticated()))],
@@ -33,7 +33,7 @@ async def get_water_entries_by_dates(
 
 @water_entries_router.put(
     "",
-    summary="Create today water entity",
+    summary="Создать сущность воды за сегодня",
     response_model=WaterEntrySchema,
     dependencies=[Depends(HasPermission(Authenticated()))],
 )

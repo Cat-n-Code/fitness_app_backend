@@ -28,10 +28,14 @@ class DiaryRepository:
     async def get_by_dates(
         self, session: AsyncSession, user_id: int, date_start: date, date_finish: date
     ):
-        q = select(DiaryEntry).where(
-            user_id == user_id,
-            DiaryEntry.date_field >= date_start,
-            DiaryEntry.date_field <= date_finish,
+        q = (
+            select(DiaryEntry)
+            .where(
+                user_id == user_id,
+                DiaryEntry.date_field >= date_start,
+                DiaryEntry.date_field <= date_finish,
+            )
+            .order_by(DiaryEntry.date_field)
         )
         s = await session.execute(q)
         return s.scalars().all()

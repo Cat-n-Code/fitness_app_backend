@@ -24,7 +24,7 @@ class WaterEntryService:
         )
         if not water_entries:
             raise EntityNotFoundException(
-                "The water entiry with given dates was not found"
+                "Сущность воды с указанными датами не была найдена"
             )
 
         return water_entries

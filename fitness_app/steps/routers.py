@@ -7,16 +7,16 @@ from fitness_app.auth.permissions import Authenticated
 from fitness_app.core.dependencies import DbSession, StepsServiceDep
 from fitness_app.steps.schemas import StepsCreateSchema, StepsSchema
 
-steps_router = APIRouter(prefix="/steps", tags=["Steps"])
+steps_router = APIRouter(prefix="/steps", tags=["Шаги"])
 
 
 @steps_router.get(
     "",
-    summary="Get steps for a specific period",
+    summary="Получить шаги за определенный период",
     response_model=list[StepsSchema],
     responses={
         status.HTTP_404_NOT_FOUND: {
-            "description": "The steps with given dates was not found"
+            "description": "Шаги за этот период не были найдены"
         },
     },
     dependencies=[Depends(HasPermission(Authenticated()))],
@@ -33,7 +33,7 @@ async def get_steps_by_dates(
 
 @steps_router.put(
     "",
-    summary="Create today steps",
+    summary="Создать сегодняшние шаги",
     response_model=StepsSchema,
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
