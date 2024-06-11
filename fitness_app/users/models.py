@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from fitness_app.chats.models import Chat
     from fitness_app.diaries.models import DiaryEntry
     from fitness_app.steps.models import StepsEntry
+    from fitness_app.water_entries.models import WaterEntry
 
 
 class User(Base):
@@ -42,6 +43,9 @@ class User(Base):
     )
     steps_entries: Mapped[list["StepsEntry"]] = relationship(
         "StepsEntry", back_populates="user"
+    )
+    water_entries: Mapped[list["WaterEntry"]] = relationship(
+        "WaterEntry", back_populates="user"
     )
     diaries: Mapped[list["DiaryEntry"]] = relationship(
         "DiaryEntry", back_populates="user"

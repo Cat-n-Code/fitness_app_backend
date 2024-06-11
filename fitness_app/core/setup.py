@@ -43,6 +43,9 @@ from fitness_app.steps.services import StepsService
 from fitness_app.users.repositories import UserRepository
 from fitness_app.users.routers import users_router
 from fitness_app.users.services import UserService
+from fitness_app.water_entries.repositories import WaterEntryRepository
+from fitness_app.water_entries.routers import water_entries_router
+from fitness_app.water_entries.services import WaterEntryService
 from fitness_app.workouts.repositories import (
     ExerciseWorkoutRepository,
     WorkoutRepository,
@@ -84,6 +87,7 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     """ Setup routers """
     app.include_router(auth_router)
     app.include_router(users_router)
+    app.include_router(water_entries_router)
     app.include_router(workouts_router)
     app.include_router(exercises_router)
     app.include_router(file_entities_router)
@@ -110,6 +114,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     workout_repository = WorkoutRepository()
     exercise_workout_repository = ExerciseWorkoutRepository()
     user_repository = UserRepository()
+    water_entry_repository = WaterEntryRepository()
     file_entity_repository = FileEntityRepository()
     exercise_repository = ExerciseRepository()
     coach_repository = CoachRepository()
@@ -126,6 +131,9 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     )
     auth_service = AuthService(password_service, token_service, user_repository)
     user_service = UserService(password_service, user_repository)
+    water_entry_service = WaterEntryService(
+        water_entry_repository, settings.goal_water_volume
+    )
     file_entity_service = FileEntityService(
         settings.region,
         settings.aws_access_key_id,
@@ -143,7 +151,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
         customer_repository, user_repository, user_service, chat_service
     )
     workout_service = WorkoutService(
-        workout_repository, chat_service, coach_service, customer_service
+        workout_repository, chat_service, coach_service, customer_service, user_service
     )
     exercise_workout_service = ExerciseWorkoutService(
         workout_service, exercise_workout_repository
@@ -157,6 +165,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     app.state.exercise_workout_service = exercise_workout_service
     app.state.auth_service = auth_service
     app.state.user_service = user_service
+    app.state.water_entry_service = water_entry_service
     app.state.file_entity_service = file_entity_service
     app.state.exercise_service = exercise_service
     app.state.coach_service = coach_service

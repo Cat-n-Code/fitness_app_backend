@@ -8,6 +8,7 @@ from sqlalchemy.orm import joinedload, selectinload
 from fitness_app.chats.models import Chat
 from fitness_app.exercises.models import Exercise
 from fitness_app.workouts.models import ExerciseWorkout, Workout
+from fitness_app.workouts.schemas import WorkoutFindSchema
 
 
 class WorkoutRepository:
@@ -40,68 +41,45 @@ class WorkoutRepository:
             workout.exercise_workouts.sort(key=lambda workout: workout.num_order)
         return workout
 
-    async def get_workouts_by_coach_id(
+    async def get_workouts_by_coach_id_or_customer_id(
         self,
         session: AsyncSession,
-        coach_id: int,
+        coach_id: Optional[int],
+        customer_id: Optional[int],
+        find_schema: Optional[WorkoutFindSchema],
         page: int,
         size: int,
         date_start: Optional[date] = None,
         date_finish: Optional[date] = None,
     ):
-        statement = select(Workout).where(
-            or_(
-                Workout.coach_id == coach_id,
-                and_(Workout.coach_id == null(), Workout.customer_id == null()),
+        if coach_id:
+            statement = select(Workout).where(
+                or_(
+                    Workout.coach_id == coach_id,
+                    and_(Workout.coach_id == null(), Workout.customer_id == null()),
+                )
             )
-        )
+        elif customer_id:
+            statement = select(Workout).where(
+                or_(
+                    Workout.customer_id == customer_id,
+                    and_(Workout.coach_id == null(), Workout.customer_id == null()),
+                )
+            )
         if date_start:
             statement = statement.where(Workout.date_field >= date_start)
         if date_finish:
             statement = statement.where(Workout.date_field <= date_finish)
-        statement = (
-            statement.offset(page * size)
-            .limit(size)
-            .order_by(desc(Workout.date_field))
-            .options(
-                joinedload(Workout.customer),
-                joinedload(Workout.coach),
-                joinedload(Workout.chat).options(selectinload(Chat.users)),
-                selectinload(Workout.exercise_workouts).options(
-                    joinedload(ExerciseWorkout.exercise).options(
-                        selectinload(Exercise.photos)
-                    ),
-                    joinedload(ExerciseWorkout.workout),
-                ),
-            )
-        )
-
-        result = await session.execute(statement)
-        workouts = result.scalars().all()
-        for workout in workouts:
-            if workout.exercise_workouts:
-                workout.exercise_workouts.sort(key=lambda workout: workout.num_order)
-        return workouts
-
-    async def get_workouts_by_customer_id(
-        self,
-        session: AsyncSession,
-        customer_id: int,
-        page: int,
-        size: int,
-        date_start: Optional[date] = None,
-        date_finish: Optional[date] = None,
-    ):
-        statement = select(Workout).where(
-            or_(
-                Workout.customer_id == customer_id,
-                and_(Workout.coach_id == null(), Workout.customer_id == null()),
-            )
-        )
-        if date_start:
-            statement = statement.where(Workout.date_field >= date_start)
-        if date_finish:
-            statement = statement.where(Workout.date_field <= date_finish)
+        if find_schema:
+            statement = statement.where(Workout.name == find_schema.name)
+            if find_schema.type_connection:
+                statement = statement.where(
+                    Workout.type_connection == find_schema.type_connection
+                )
+            if find_schema.time_start:
+                statement = statement.where(
+                    Workout.time_start == find_schema.time_start
+                )
         statement = (
             statement.offset(page * size)
             .limit(size)

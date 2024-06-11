@@ -16,6 +16,7 @@ from fitness_app.workouts.schemas import (
     ExerciseWorkoutSchema,
     ExerciseWorkoutUpdateSchema,
     WorkoutCreateSchema,
+    WorkoutFindSchema,
     WorkoutSchema,
     WorkoutUpdateSchema,
 )
@@ -63,23 +64,25 @@ async def get_by_id(
 
 
 @workouts_router.get(
-    "/users/current",
+    "/users/{user_id}",
     response_model=list[WorkoutSchema],
-    summary="Получить список тренировок текущего пользователя",
+    summary="Получить список тренировок пользователя по user_id",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
-async def get_workouts_by_user(
+async def get_workouts_by_user_id(
     session: DbSession,
     service: WorkoutServiceDep,
-    user: AuthenticateUser,
+    user_id: Annotated[int, Path],
+    find_schema: Optional[WorkoutFindSchema] = None,
     page: PageField = 0,
     size: SizeField = 10,
     date_start: Optional[date] = None,
     date_finish: Optional[date] = None,
 ) -> list[WorkoutSchema]:
-    return await service.get_workouts_by_user(
+    return await service.get_workouts_by_user_id(
         session,
-        user,
+        user_id,
+        find_schema,
         page,
         size,
         date_start,

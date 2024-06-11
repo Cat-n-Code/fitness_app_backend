@@ -10,8 +10,7 @@ class AppSettings(BaseSettings):
     auth_token_secret_key: str
 
     default_steps_goal: int = 8000
-
-    store_photos_path: str
+    goal_water_volume: int = 8000
 
     region: str
     aws_access_key_id: str

@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, Path, UploadFile, status
 from pydantic import Json
@@ -9,6 +9,7 @@ from fitness_app.core.dependencies import DbSession, ExerciseServiceDep
 from fitness_app.core.utils import PageField, SizeField
 from fitness_app.exercises.schemas import (
     ExerciseCreateSchema,
+    ExerciseFindSchema,
     ExerciseSchema,
     ExerciseUpdateSchema,
 )
@@ -55,19 +56,20 @@ async def get_by_id(
 
 
 @exercises_router.get(
-    "/users/current",
+    "/users/{user_id}",
     response_model=list[ExerciseSchema],
-    summary="Получение заданий текущего пользователя",
+    summary="Получение заданий пользователя по user_id",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def get_by_user_id(
     session: DbSession,
     service: ExerciseServiceDep,
-    user: AuthenticateUser,
+    user_id: Annotated[int, Path],
+    find_schema: Optional[ExerciseFindSchema] = None,
     page: PageField = 0,
     size: SizeField = 10,
 ) -> list[ExerciseSchema]:
-    return await service.get_by_user_id(session, user.id, page, size)
+    return await service.get_by_user_id(session, user_id, find_schema, page, size)
 
 
 @exercises_router.put(

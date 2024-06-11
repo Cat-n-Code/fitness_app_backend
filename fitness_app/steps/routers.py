@@ -1,5 +1,4 @@
 from datetime import date
-from typing import List
 
 from fastapi import APIRouter, Depends, status
 
@@ -14,7 +13,7 @@ steps_router = APIRouter(prefix="/steps", tags=["Steps"])
 @steps_router.get(
     "",
     summary="Get steps for a specific period",
-    response_model=List[StepsSchema],
+    response_model=list[StepsSchema],
     responses={
         status.HTTP_404_NOT_FOUND: {
             "description": "The steps with given dates was not found"
@@ -28,10 +27,8 @@ async def get_steps_by_dates(
     user: AuthenticateUser,
     date_start: date,
     date_finish: date,
-):
-    steps = await service.get_by_dates(session, user.id, date_start, date_finish)
-    validated_steps = [StepsSchema.model_validate(step) for step in steps]
-    return validated_steps
+) -> list[StepsSchema]:
+    return await service.get_by_dates(session, user.id, date_start, date_finish)
 
 
 @steps_router.put(
@@ -45,6 +42,5 @@ async def create_or_update_steps(
     service: StepsServiceDep,
     user: AuthenticateUser,
     schema: StepsCreateSchema,
-):
-    step = await service.create_or_update(session, user.id, schema)
-    return StepsSchema.model_validate(step)
+) -> StepsSchema:
+    return await service.create_or_update(session, user.id, schema)

@@ -57,3 +57,13 @@ class ExerciseUpdateSchema(BaseModel):
     equipment: Optional[str] = None
     difficulty: Optional[Difficulty] = None
     description: Optional[str] = None
+
+
+class ExerciseFindSchema(BaseModel):
+    name: str
+    muscle: Optional[str] = None
+    additionalMuscle: Optional[str] = None
+    type: Optional[ExerciseType] = None
+    equipment: Optional[str] = None
+    difficulty: Optional[Difficulty] = None
+    description: Optional[str] = None
