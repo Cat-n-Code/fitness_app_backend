@@ -1,5 +1,4 @@
 from datetime import date
-from typing import List
 
 from fastapi import APIRouter, Depends, status
 
@@ -8,16 +7,16 @@ from fitness_app.auth.permissions import Authenticated
 from fitness_app.core.dependencies import DbSession, DiaryServiceDep
 from fitness_app.diaries.schemas import DiaryCreateSchema, DiarySchema
 
-diaries_router = APIRouter(prefix="/diaries", tags=["Diaries"])
+diaries_router = APIRouter(prefix="/diaries", tags=["Дневники"])
 
 
 @diaries_router.get(
     "",
-    summary="Get diaries for a specific period",
-    response_model=List[DiarySchema],
+    summary="Получить дневники за определенный период",
+    response_model=list[DiarySchema],
     responses={
         status.HTTP_404_NOT_FOUND: {
-            "description": "The diaries with given dates was not found"
+            "description": "Дневники за данный период не были найдены"
         },
     },
     dependencies=[Depends(HasPermission(Authenticated()))],
@@ -28,15 +27,13 @@ async def get_diaries_by_dates(
     user: AuthenticateUser,
     date_start: date,
     date_finish: date,
-):
-    diaries = await service.get_by_dates(session, user.id, date_start, date_finish)
-    validated_diaries = [DiarySchema.model_validate(diary) for diary in diaries]
-    return validated_diaries
+) -> list[DiarySchema]:
+    return await service.get_by_dates(session, user.id, date_start, date_finish)
 
 
 @diaries_router.put(
     "",
-    summary="Create today diary",
+    summary="Создать сегодняшний дневник",
     response_model=DiarySchema,
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
@@ -45,6 +42,5 @@ async def create_or_update_today_diary(
     service: DiaryServiceDep,
     user: AuthenticateUser,
     schema: DiaryCreateSchema,
-):
-    diary = await service.create_or_update(session, user.id, schema)
-    return DiarySchema.model_validate(diary)
+) -> DiarySchema:
+    return await service.create_or_update(session, user.id, schema)

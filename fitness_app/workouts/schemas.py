@@ -54,6 +54,7 @@ class WorkoutSchema(BaseModel):
     coach_id: Optional[int] = None
     customer_id: Optional[int] = None
     chat_id: Optional[int] = None
+    name: str
     type_connection: Optional[TypeConnection] = None
     date_field: Optional[date] = None
     time_start: Optional[datetime] = None
@@ -67,6 +68,7 @@ class WorkoutSchema(BaseModel):
 class WorkoutCreateSchema(BaseModel):
     coach_id: Optional[int] = None
     customer_id: Optional[int] = None
+    name: str
     type_connection: Optional[TypeConnection] = None
     date_field: Optional[date] = None
     time_start: Optional[datetime] = None
@@ -74,6 +76,14 @@ class WorkoutCreateSchema(BaseModel):
 
 class WorkoutUpdateSchema(BaseModel):
     id: int
+    name: str
     type_connection: Optional[TypeConnection] = None
     date_field: Optional[date] = None
     time_start: Optional[datetime] = None
+
+
+class WorkoutFindSchema(BaseModel):
+    name: Optional[str] = None
+    type_connection: Optional[TypeConnection] = None
+    from_time_start: Optional[datetime] = None
+    to_time_start: Optional[datetime] = None

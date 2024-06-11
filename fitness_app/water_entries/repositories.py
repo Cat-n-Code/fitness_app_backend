@@ -3,24 +3,24 @@ from datetime import date
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fitness_app.diaries.models import DiaryEntry
+from fitness_app.water_entries.models import WaterEntry
 
 
-class DiaryRepository:
-    async def save(self, session: AsyncSession, diary: DiaryEntry):
-        session.add(diary)
+class WaterEntryRepository:
+    async def save(self, session: AsyncSession, water_entry: WaterEntry):
+        session.add(water_entry)
         await session.flush()
         await session.commit()
-        return diary
+        return water_entry
 
     async def get_by_id(self, session: AsyncSession, id: int):
-        return await session.get(DiaryEntry, id)
+        return await session.get(WaterEntry, id)
 
     async def get_by_user_id_and_date(
         self, session: AsyncSession, user_id: int, date_field: date
     ):
-        q = select(DiaryEntry).where(
-            DiaryEntry.user_id == user_id, DiaryEntry.date_field == date_field
+        q = select(WaterEntry).where(
+            WaterEntry.user_id == user_id, WaterEntry.date_field == date_field
         )
         s = await session.execute(q)
         return s.scalar_one_or_none()
@@ -29,13 +29,13 @@ class DiaryRepository:
         self, session: AsyncSession, user_id: int, date_start: date, date_finish: date
     ):
         q = (
-            select(DiaryEntry)
+            select(WaterEntry)
             .where(
                 user_id == user_id,
-                DiaryEntry.date_field >= date_start,
-                DiaryEntry.date_field <= date_finish,
+                WaterEntry.date_field >= date_start,
+                WaterEntry.date_field <= date_finish,
             )
-            .order_by(DiaryEntry.date_field)
+            .order_by(WaterEntry.date_field)
         )
         s = await session.execute(q)
         return s.scalars().all()
@@ -45,7 +45,7 @@ class DiaryRepository:
     ):
         q = select(
             exists().where(
-                DiaryEntry.user_id == user_id, DiaryEntry.date_field == date_field
+                WaterEntry.user_id == user_id, WaterEntry.date_field == date_field
             )
         )
         s = await session.execute(q)

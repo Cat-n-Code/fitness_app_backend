@@ -1,7 +1,7 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Path, status
+from fastapi import APIRouter, Depends, Path, Query, status
 
 from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
 from fitness_app.auth.permissions import Authenticated
@@ -15,10 +15,27 @@ from fitness_app.workouts.schemas import (
     ExerciseWorkoutCreateSchema,
     ExerciseWorkoutSchema,
     ExerciseWorkoutUpdateSchema,
+    TypeConnection,
     WorkoutCreateSchema,
+    WorkoutFindSchema,
     WorkoutSchema,
     WorkoutUpdateSchema,
 )
+
+
+def get_workout_find_schema(
+    name: Optional[str] = Query(None),
+    type_connection: Optional[TypeConnection] = Query(None),
+    from_time_start: Optional[datetime] = Query(None),
+    to_time_start: Optional[datetime] = Query(None),
+) -> WorkoutFindSchema:
+    return WorkoutFindSchema(
+        name=name,
+        type_connection=type_connection,
+        from_time_start=from_time_start,
+        to_time_start=to_time_start,
+    )
+
 
 workouts_router = APIRouter(prefix="/workouts", tags=["Тренировки"])
 
@@ -63,23 +80,25 @@ async def get_by_id(
 
 
 @workouts_router.get(
-    "/users/current",
+    "/users/{user_id}",
     response_model=list[WorkoutSchema],
-    summary="Получить список тренировок текущего пользователя",
+    summary="Получить список тренировок пользователя по user_id",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
-async def get_workouts_by_user(
+async def get_workouts_by_user_id(
     session: DbSession,
     service: WorkoutServiceDep,
-    user: AuthenticateUser,
+    user_id: Annotated[int, Path],
+    find_schema: Optional[WorkoutFindSchema] = Depends(get_workout_find_schema),
     page: PageField = 0,
     size: SizeField = 10,
     date_start: Optional[date] = None,
     date_finish: Optional[date] = None,
 ) -> list[WorkoutSchema]:
-    return await service.get_workouts_by_user(
+    return await service.get_workouts_by_user_id(
         session,
-        user,
+        user_id,
+        find_schema,
         page,
         size,
         date_start,
@@ -139,7 +158,7 @@ async def delete_by_id(
 
 @workouts_router.post(
     "/exercises",
-    response_model=ExerciseWorkoutCreateSchema,
+    response_model=ExerciseWorkoutSchema,
     responses={
         status.HTTP_403_FORBIDDEN: {
             "description": "Необходимо указать свой coach_id или customer_id"

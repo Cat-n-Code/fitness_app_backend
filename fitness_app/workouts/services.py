@@ -13,8 +13,10 @@ from fitness_app.core.exceptions import (
 )
 from fitness_app.core.utils import update_model_by_schema
 from fitness_app.customers.services import CustomerService
+from fitness_app.exercises.services import ExerciseService
 from fitness_app.users.models import User
 from fitness_app.users.schemas import Role
+from fitness_app.users.services import UserService
 from fitness_app.workouts.models import ExerciseWorkout, Workout
 from fitness_app.workouts.repositories import (
     ExerciseWorkoutRepository,
@@ -24,6 +26,7 @@ from fitness_app.workouts.schemas import (
     ExerciseWorkoutCreateSchema,
     ExerciseWorkoutUpdateSchema,
     WorkoutCreateSchema,
+    WorkoutFindSchema,
     WorkoutUpdateSchema,
 )
 
@@ -35,11 +38,13 @@ class WorkoutService:
         chat_service: ChatService,
         coach_service: CoachService,
         customer_service: CustomerService,
+        user_service: UserService,
     ):
         self._workout_repository = workout_repository
         self._chat_service = chat_service
         self._coach_service = coach_service
         self._customer_service = customer_service
+        self._user_service = user_service
 
     async def create(
         self,
@@ -83,22 +88,42 @@ class WorkoutService:
             raise EntityNotFoundException("Тренировки с указанным id не найдено")
         return workout
 
-    async def get_workouts_by_user(
+    async def get_workouts_by_user_id(
         self,
         session: AsyncSession,
-        user: User,
+        user_id: int,
+        find_schema: Optional[WorkoutFindSchema],
         page: int,
         size: int,
         date_start: Optional[date] = None,
         date_finish: Optional[date] = None,
     ):
+        user = await self._user_service.get_by_id(session, user_id)
         if user.role == Role.COACH:
-            return await self._workout_repository.get_workouts_by_coach_id(
-                session, user.coach_info.id, page, size, date_start, date_finish
+            return (
+                await self._workout_repository.get_workouts_by_coach_id_or_customer_id(
+                    session,
+                    user.coach_info.id,
+                    None,
+                    find_schema,
+                    page,
+                    size,
+                    date_start,
+                    date_finish,
+                )
             )
         elif user.role == Role.CUSTOMER:
-            return await self._workout_repository.get_workouts_by_customer_id(
-                session, user.customer_info.id, page, size, date_start, date_finish
+            return (
+                await self._workout_repository.get_workouts_by_coach_id_or_customer_id(
+                    session,
+                    None,
+                    user.customer_info.id,
+                    find_schema,
+                    page,
+                    size,
+                    date_start,
+                    date_finish,
+                )
             )
 
     async def update_by_id(
@@ -138,9 +163,11 @@ class ExerciseWorkoutService:
         self,
         workout_service: WorkoutService,
         exercise_workout_repository: ExerciseWorkoutRepository,
+        exercise_service: ExerciseService,
     ):
         self._workout_service = workout_service
         self._exercise_workout_repository = exercise_workout_repository
+        self._exercise_service = exercise_service
 
     async def create(
         self,
@@ -148,13 +175,17 @@ class ExerciseWorkoutService:
         user: User,
         schema: ExerciseWorkoutCreateSchema,
     ):
+        exercise_workout = ExerciseWorkout(**schema.model_dump())
+
         workout = await self._workout_service.get_by_id(session, schema.workout_id)
         if (user.role == Role.COACH and user.coach_info.id != workout.coach_id) or (
             user.role == Role.CUSTOMER and user.customer_info.id != workout.customer_id
         ):
             raise ForbiddenException("Необходимо указать свой coach_id или customer_id")
+        exercise_workout.exercise = await self._exercise_service.get_by_id(
+            session, schema.exercise_id
+        )
 
-        exercise_workout = ExerciseWorkout(**schema.model_dump())
         return await self._exercise_workout_repository.save(session, exercise_workout)
 
     async def update_by_id(

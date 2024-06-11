@@ -35,6 +35,7 @@ class Workout(Base):
     coach_id: Mapped[int] = mapped_column(ForeignKey("coaches.id"), nullable=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=True)
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), nullable=True)
+    name: Mapped[str] = mapped_column(nullable=False)
     type_connection: Mapped[str] = mapped_column(nullable=True)
     date_field: Mapped[date] = mapped_column(nullable=True)
     time_start: Mapped[datetime] = mapped_column(nullable=True)

@@ -1,8 +1,13 @@
 from datetime import date
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
 
-from fitness_app.diaries.models import Feeling
+
+class Feeling(StrEnum):
+    GOOD = "GOOD"
+    NORMAL = "NORMAL"
+    BAD = "BAD"
 
 
 class DiarySchema(BaseModel):

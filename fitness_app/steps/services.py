@@ -21,7 +21,7 @@ class StepsService:
             session, user_id, date_start, date_finish
         )
         if steps == []:
-            raise EntityNotFoundException("The steps with given dates was not found")
+            raise EntityNotFoundException("Шаги за этот период не были найдены")
 
         return steps
 

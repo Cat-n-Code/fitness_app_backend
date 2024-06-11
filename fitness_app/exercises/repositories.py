@@ -1,8 +1,11 @@
+from typing import Optional
+
 from sqlalchemy import desc, null, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from fitness_app.exercises.models import Exercise
+from fitness_app.exercises.schemas import ExerciseFindSchema
 
 
 class ExerciseRepository:
@@ -22,16 +25,48 @@ class ExerciseRepository:
         return result.scalar_one_or_none()
 
     async def get_by_user_id(
-        self, session: AsyncSession, user_id: int, page: int, size: int
+        self,
+        session: AsyncSession,
+        user_id: int,
+        find_schema: Optional[ExerciseFindSchema],
+        page: int,
+        size: int,
     ):
+        statement = select(Exercise).where(
+            or_(Exercise.user_id == null(), Exercise.user_id == user_id)
+        )
+        if find_schema:
+            if find_schema.name:
+                statement = statement.where(Exercise.name.contains(find_schema.name))
+            if find_schema.muscle:
+                statement = statement.where(
+                    Exercise.muscle.contains(find_schema.muscle)
+                )
+            if find_schema.additionalMuscle:
+                statement = statement.where(
+                    Exercise.additionalMuscle.contains(find_schema.additionalMuscle)
+                )
+            if find_schema.type:
+                statement = statement.where(Exercise.type.contains(find_schema.type))
+            if find_schema.equipment:
+                statement = statement.where(
+                    Exercise.equipment.contains(find_schema.equipment)
+                )
+            if find_schema.difficulty:
+                statement = statement.where(
+                    Exercise.difficulty.contains(find_schema.difficulty)
+                )
+            if find_schema.description:
+                statement = statement.where(
+                    Exercise.description.contains(find_schema.description)
+                )
         statement = (
-            select(Exercise)
-            .where(or_(Exercise.user_id == null(), Exercise.user_id == user_id))
-            .offset(page * size)
+            statement.offset(page * size)
             .limit(size)
             .order_by(desc(Exercise.id))
             .options(selectinload(Exercise.photos))
         )
+
         result = await session.execute(statement)
         return result.scalars().all()
 

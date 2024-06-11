@@ -28,10 +28,14 @@ class StepsRepository:
     async def get_by_dates(
         self, session: AsyncSession, user_id: int, date_start: date, date_finish: date
     ):
-        q = select(StepsEntry).where(
-            user_id == user_id,
-            StepsEntry.date_field >= date_start,
-            StepsEntry.date_field <= date_finish,
+        q = (
+            select(StepsEntry)
+            .where(
+                user_id == user_id,
+                StepsEntry.date_field >= date_start,
+                StepsEntry.date_field <= date_finish,
+            )
+            .order_by(StepsEntry.date_field)
         )
         s = await session.execute(q)
         return s.scalars().all()
