@@ -9,3 +9,8 @@ class FileEntitySchema(BaseModel):
     id: int
     exercise_id: Optional[int] = None
     filename: str
+
+
+class FileEntityUrlSchema(BaseModel):
+    id: int
+    full_url: str
