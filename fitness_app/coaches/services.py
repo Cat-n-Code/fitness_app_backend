@@ -41,6 +41,7 @@ class CoachService:
         setattr(coach, "user_id", saved_user.id)
         setattr(coach, "user", saved_user)
         setattr(coach, "customers", [])
+        setattr(coach, "feedbacks", [])
         setattr(saved_user, "role", "COACH")
         setattr(saved_user, "coach_info", coach)
         self._user_repository.save(session, saved_user)
@@ -73,13 +74,13 @@ class CoachService:
         return coach
 
     async def get_by_user_id(self, session: AsyncSession, user_id: int):
-        user = await session.get(User, id)
+        user = await self._user_service.get_by_id(session, user_id)
         if user is None:
             raise EntityNotFoundException("User with given id was not found")
         if user.coach_info is None:
             raise EntityNotFoundException("User with given id is not a coach")
 
-        return await user.coach_info
+        return user.coach_info
 
     async def update_by_user(
         self, session: AsyncSession, schema: CoachUpdateSchema, user: User
