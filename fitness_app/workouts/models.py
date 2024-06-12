@@ -5,6 +5,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fitness_app.core.db_manager import Base
+from fitness_app.workouts.schemas import Stages
 
 if TYPE_CHECKING:
     from fitness_app.chats.models import Chat
@@ -23,6 +24,7 @@ class ExerciseWorkout(Base):
     num_sets: Mapped[int] = mapped_column(nullable=True)
     num_sets_done: Mapped[int] = mapped_column(nullable=False, default=0)
     num_reps: Mapped[int] = mapped_column(nullable=True)
+    stage: Mapped[Stages] = mapped_column(nullable=False)
 
     exercise: Mapped["Exercise"] = relationship(back_populates="exercise_workouts")
     workout: Mapped["Workout"] = relationship(back_populates="exercise_workouts")
