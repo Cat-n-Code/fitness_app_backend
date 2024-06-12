@@ -46,12 +46,13 @@ from fitness_app.users.services import UserService
 from fitness_app.water_entries.repositories import WaterEntryRepository
 from fitness_app.water_entries.routers import water_entries_router
 from fitness_app.water_entries.services import WaterEntryService
+from fitness_app.workouts.ExerciseWorkoutService import ExerciseWorkoutService
 from fitness_app.workouts.repositories import (
     ExerciseWorkoutRepository,
     WorkoutRepository,
 )
 from fitness_app.workouts.routers import workouts_router
-from fitness_app.workouts.services import ExerciseWorkoutService, WorkoutService
+from fitness_app.workouts.WorkoutService import WorkoutService
 
 
 def create_app(settings: AppSettings | None = None) -> FastAPI:
@@ -150,10 +151,16 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     customer_service = CustomerService(
         customer_repository, user_repository, user_service, chat_service
     )
-    workout_service = WorkoutService(
-        workout_repository, chat_service, coach_service, customer_service, user_service
-    )
     exercise_service = ExerciseService(exercise_repository, file_entity_service)
+    workout_service = WorkoutService(
+        workout_repository,
+        exercise_workout_repository,
+        exercise_service,
+        chat_service,
+        coach_service,
+        customer_service,
+        user_service,
+    )
     exercise_workout_service = ExerciseWorkoutService(
         workout_service, exercise_workout_repository, exercise_service
     )

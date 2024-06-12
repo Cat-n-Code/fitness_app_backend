@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, Path, Query, status
@@ -92,17 +92,9 @@ async def get_workouts_by_user_id(
     find_schema: Optional[WorkoutFindSchema] = Depends(get_workout_find_schema),
     page: PageField = 0,
     size: SizeField = 10,
-    date_start: Optional[date] = None,
-    date_finish: Optional[date] = None,
 ) -> list[WorkoutSchema]:
     return await service.get_workouts_by_user_id(
-        session,
-        user_id,
-        find_schema,
-        page,
-        size,
-        date_start,
-        date_finish,
+        session, user_id, find_schema, page, size
     )
 
 

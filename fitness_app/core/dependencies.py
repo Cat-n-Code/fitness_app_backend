@@ -15,7 +15,8 @@ from fitness_app.messages.services import MessageService
 from fitness_app.steps.services import StepsService
 from fitness_app.users.services import UserService
 from fitness_app.water_entries.services import WaterEntryService
-from fitness_app.workouts.services import ExerciseWorkoutService, WorkoutService
+from fitness_app.workouts.ExerciseWorkoutService import ExerciseWorkoutService
+from fitness_app.workouts.WorkoutService import WorkoutService
 
 
 def db_manager(request: Request) -> DatabaseManager:

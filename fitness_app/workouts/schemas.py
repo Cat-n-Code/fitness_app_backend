@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 from enum import StrEnum
 from typing import Optional
 
@@ -47,6 +47,14 @@ class ExerciseWorkoutUpdateSchema(BaseModel):
     num_reps: Optional[int] = None
 
 
+class WorkoutCreateExerciseWorkoutSchema(BaseModel):
+    exercise_id: int
+    num_order: int
+    num_sets: Optional[int] = None
+    num_sets_done: Optional[int] = None
+    num_reps: Optional[int] = None
+
+
 class WorkoutSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -56,7 +64,6 @@ class WorkoutSchema(BaseModel):
     chat_id: Optional[int] = None
     name: str
     type_connection: Optional[TypeConnection] = None
-    date_field: Optional[date] = None
     time_start: Optional[datetime] = None
 
     exercise_workouts: Optional[list["ExerciseWorkoutSchema"]] = []
@@ -70,15 +77,15 @@ class WorkoutCreateSchema(BaseModel):
     customer_id: Optional[int] = None
     name: str
     type_connection: Optional[TypeConnection] = None
-    date_field: Optional[date] = None
     time_start: Optional[datetime] = None
+
+    exercise_workouts_create: Optional[list[WorkoutCreateExerciseWorkoutSchema]] = []
 
 
 class WorkoutUpdateSchema(BaseModel):
     id: int
     name: str
     type_connection: Optional[TypeConnection] = None
-    date_field: Optional[date] = None
     time_start: Optional[datetime] = None
 
 
