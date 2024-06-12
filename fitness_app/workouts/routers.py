@@ -80,21 +80,21 @@ async def get_by_id(
 
 
 @workouts_router.get(
-    "/users/{user_id}",
+    "/users/current",
     response_model=list[WorkoutSchema],
-    summary="Получить список тренировок пользователя по user_id",
+    summary="Получить список тренировок текущего пользователя",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def get_workouts_by_user_id(
     session: DbSession,
     service: WorkoutServiceDep,
-    user_id: Annotated[int, Path],
+    user: AuthenticateUser,
     find_schema: Optional[WorkoutFindSchema] = Depends(get_workout_find_schema),
     page: PageField = 0,
     size: SizeField = 10,
 ) -> list[WorkoutSchema]:
     return await service.get_workouts_by_user_id(
-        session, user_id, find_schema, page, size
+        session, user.id, find_schema, page, size
     )
 
 

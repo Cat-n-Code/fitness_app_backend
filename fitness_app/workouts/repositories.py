@@ -59,12 +59,7 @@ class WorkoutRepository:
                 )
             )
         elif customer_id:
-            statement = statement.where(
-                or_(
-                    Workout.customer_id == customer_id,
-                    and_(Workout.coach_id == null(), Workout.customer_id == null()),
-                )
-            )
+            statement = statement.where(Workout.customer_id == customer_id)
 
         if find_schema:
             if find_schema.name:
