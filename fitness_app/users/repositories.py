@@ -1,4 +1,4 @@
-from sqlalchemy import exists, func, select
+from sqlalchemy import and_, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -43,14 +43,16 @@ class UserRepository:
         result = await session.execute(statement)
         return result.scalar_one()
 
-    async def is_existing_assignment(
+    async def is_exists_assignment(
         self, session: AsyncSession, customer_id: int, coach_id: int
     ):
         statement = select(
             exists().where(
                 (
-                    CoachesCustomers.customer_id == customer_id,
-                    CoachesCustomers.coach_id == coach_id,
+                    and_(
+                        CoachesCustomers.customer_id == customer_id,
+                        CoachesCustomers.coach_id == coach_id,
+                    )
                 )
             )
         )
@@ -60,7 +62,7 @@ class UserRepository:
     async def assign_coach_custoemer(
         self, session: AsyncSession, customer_id: int, coach_id: int
     ) -> Coach:
-        if self.is_existing_assignment(session, customer_id, coach_id):
+        if await self.is_exists_assignment(session, customer_id, coach_id):
             raise EntityAlreadyExistsException(
                 "coach already assigned to to this customer"
             )
@@ -98,7 +100,7 @@ class UserRepository:
     async def unassign_coach_custoemer(
         self, session: AsyncSession, customer_id: int, coach_id: int
     ) -> Coach:
-        if not self.is_existing_assignment(session, customer_id, coach_id):
+        if not await self.is_exists_assignment(session, customer_id, coach_id):
             raise EntityAlreadyExistsException(
                 "coach is not assigned to to this customer yet"
             )

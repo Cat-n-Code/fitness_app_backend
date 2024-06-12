@@ -18,8 +18,7 @@ class Feedback(Base):
     )
     coach_id: Mapped[int] = mapped_column(ForeignKey("coaches.id"), primary_key=True)
     score: Mapped[int]
-    description: Mapped[str]
-    customer: Mapped["Customer"] = relationship("Cutomer", back_populates="feedbacks")
+    customer: Mapped["Customer"] = relationship("Customer", back_populates="feedbacks")
     coach: Mapped["Coach"] = relationship("Coach", back_populates="feedbacks")
 
     __table_args__ = (
