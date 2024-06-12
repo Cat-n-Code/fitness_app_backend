@@ -31,6 +31,9 @@ from fitness_app.diaries.services import DiaryService
 from fitness_app.exercises.repositories import ExerciseRepository
 from fitness_app.exercises.routers import exercises_router
 from fitness_app.exercises.services import ExerciseService
+from fitness_app.feedbacks.repositories import FeedbackRepository
+from fitness_app.feedbacks.routers import feedbacks_router
+from fitness_app.feedbacks.services import FeedbackService
 from fitness_app.file_entities.repositories import FileEntityRepository
 from fitness_app.file_entities.routers import file_entities_router
 from fitness_app.file_entities.services import FileEntityService
@@ -100,6 +103,7 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     app.include_router(workouts_router)
     app.include_router(steps_router)
     app.include_router(diaries_router)
+    app.include_router(feedbacks_router)
 
     """ Setup exception handlers """
     app.add_exception_handler(AppException, handle_app_exception)
@@ -124,6 +128,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     chat_repository = ChatRepository()
     steps_repository = StepsRepository()
     diary_repository = DiaryRepository()
+    feedback_repository = FeedbackRepository()
 
     password_service = PasswordService()
     password_service = PasswordService()
@@ -167,6 +172,9 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     message_service = MessageService(message_repository, chat_service)
     steps_service = StepsService(steps_repository, settings.default_steps_goal)
     diary_service = DiaryService(diary_repository)
+    feedback_service = FeedbackService(
+        feedback_repository, user_repository, coach_repository, coach_service
+    )
 
     app.state.workout_service = workout_service
     app.state.exercise_workout_service = exercise_workout_service
@@ -181,6 +189,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     app.state.message_service = message_service
     app.state.steps_service = steps_service
     app.state.diary_service = diary_service
+    app.state.feedback_service = feedback_service
 
 
 @asynccontextmanager
