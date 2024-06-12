@@ -21,7 +21,6 @@ customers_router = APIRouter(prefix="/customers", tags=["Клиенты"])
     "/",
     summary="Получить список всех клиентов",
     response_model=PageSchema,
-    # dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def get_all(
     session: DbSession,
@@ -37,18 +36,32 @@ async def get_all(
 
 
 @customers_router.get(
-    "/id/{user_id}",
-    summary="Получить клинта по customer_id",
+    "/id/{customer_id}",
+    summary="Получить клиента по customer_id",
     response_model=CustomerSchema,
-    # dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def get(
     session: DbSession,
     service: CustomerServiceDep,
+    customer_id: IdField,
+):
+    customer = await service.get_by_id(session, customer_id)
+    return CustomerSchema.model_validate(customer)
+
+
+@customers_router.get(
+    "/user_id/{user_id}",
+    summary="Получить клиента по user_id",
+    response_model=CustomerSchema,
+    # dependencies=[Depends(HasPermission(Authenticated()))],
+)
+async def get_by_user_id(
+    session: DbSession,
+    service: CustomerServiceDep,
     user_id: IdField,
 ):
-    user = await service.get_by_id(session, user_id)
-    return CustomerSchema.model_validate(user)
+    customer = await service.get_by_user_id(session, user_id)
+    return CustomerSchema.model_validate(customer)
 
 
 @customers_router.post(

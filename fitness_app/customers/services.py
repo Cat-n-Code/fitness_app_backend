@@ -111,13 +111,13 @@ class CustomerService:
         return users[1]
 
     async def get_by_user_id(self, session: AsyncSession, user_id: int):
-        user = await session.get(User, id)
+        user = await self._user_service.get_by_id(session, user_id)
         if user is None:
             raise EntityNotFoundException("User with given id was not found")
         if user.customer_info is None:
-            raise EntityNotFoundException("User with given id is not a coach")
+            raise EntityNotFoundException("User with given id is not a customer")
 
-        return await user.customer_info
+        return user.customer_info
 
     async def update_by_user(
         self, session: AsyncSession, schema: CustomerUpdateSchema, user: User
