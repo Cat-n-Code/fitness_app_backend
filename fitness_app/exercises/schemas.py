@@ -46,6 +46,8 @@ class ExerciseCreateSchema(BaseModel):
     difficulty: Optional[Difficulty] = None
     description: Optional[str] = None
 
+    photo_ids: Optional[list[int]] = None
+
 
 class ExerciseUpdateSchema(BaseModel):
     id: int
@@ -57,6 +59,8 @@ class ExerciseUpdateSchema(BaseModel):
     equipment: Optional[str] = None
     difficulty: Optional[Difficulty] = None
     description: Optional[str] = None
+
+    photo_ids: Optional[list[int]] = None
 
 
 class ExerciseFindSchema(BaseModel):

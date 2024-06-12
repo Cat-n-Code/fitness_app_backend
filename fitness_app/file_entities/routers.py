@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, UploadFile, status
 from fitness_app.auth.dependencies import HasPermission
 from fitness_app.auth.permissions import Authenticated
 from fitness_app.core.dependencies import DbSession, FileEntityServiceDep
+from fitness_app.file_entities.schemas import FileEntitySchema
 
 file_entities_router = APIRouter(prefix="/files", tags=["Файлы"])
 
@@ -28,16 +29,13 @@ async def get_by_filename(
 
 @file_entities_router.post(
     "/",
-    response_model=str,
-    summary="Добавление файла в хранилище",
+    response_model=FileEntitySchema,
+    summary="Добавление файла",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def create(
     session: DbSession,
     service: FileEntityServiceDep,
     file: UploadFile,
-) -> str:
-    file = await service.create(session, file)
-    print("file:", file.id, file.filename)
-    link = await service.get_by_filename(session, file.filename)
-    return link
+) -> FileEntitySchema:
+    return await service.create(session, file)
