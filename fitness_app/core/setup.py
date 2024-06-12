@@ -148,6 +148,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
         settings.aws_endpoint,
         settings.aws_access_domain_name,
         file_entity_repository,
+        exercise_repository,
     )
     chat_service = ChatService(chat_repository, user_service)
     coach_service = CoachService(

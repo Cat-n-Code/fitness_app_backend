@@ -1,7 +1,6 @@
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Path, Query, UploadFile, status
-from pydantic import Json
+from fastapi import APIRouter, Depends, Path, Query, status
 
 from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
 from fitness_app.auth.permissions import Authenticated
@@ -50,14 +49,12 @@ async def create(
     session: DbSession,
     service: ExerciseServiceDep,
     user: AuthenticateUser,
-    schema: Json[ExerciseCreateSchema],
-    photos: list[UploadFile],
+    schema: ExerciseCreateSchema,
 ) -> ExerciseSchema:
     return await service.create(
         session,
         schema,
-        photos,
-        user,
+        user.id,
     )
 
 
@@ -79,7 +76,7 @@ async def get_by_id(
 
 
 @exercises_router.get(
-    "/users/{user_id}",
+    "/users/current",
     response_model=list[ExerciseSchema],
     summary="Получение заданий пользователя по user_id",
     dependencies=[Depends(HasPermission(Authenticated()))],
@@ -87,12 +84,12 @@ async def get_by_id(
 async def get_by_user_id(
     session: DbSession,
     service: ExerciseServiceDep,
-    user_id: Annotated[int, Path],
+    user: AuthenticateUser,
     find_schema: Optional[ExerciseFindSchema] = Depends(get_exercise_find_schema),
     page: PageField = 0,
     size: SizeField = 10,
 ) -> list[ExerciseSchema]:
-    return await service.get_by_user_id(session, user_id, find_schema, page, size)
+    return await service.get_by_user_id(session, user.id, find_schema, page, size)
 
 
 @exercises_router.put(
@@ -113,10 +110,9 @@ async def update_by_id(
     session: DbSession,
     service: ExerciseServiceDep,
     user: AuthenticateUser,
-    schema: Json[ExerciseUpdateSchema],
-    photos: list[UploadFile],
+    schema: ExerciseUpdateSchema,
 ) -> ExerciseSchema:
-    return await service.update_by_id(session, user.id, schema, photos)
+    return await service.update_by_id(session, user.id, schema)
 
 
 @exercises_router.delete(

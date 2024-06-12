@@ -1,9 +1,12 @@
 from typing import Optional
 
-from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fitness_app.core.exceptions import EntityNotFoundException, ForbiddenException
+from fitness_app.core.exceptions import (
+    BadRequestException,
+    EntityNotFoundException,
+    ForbiddenException,
+)
 from fitness_app.core.utils import update_model_by_schema
 from fitness_app.exercises.models import Exercise
 from fitness_app.exercises.repositories import ExerciseRepository
@@ -13,7 +16,6 @@ from fitness_app.exercises.schemas import (
     ExerciseUpdateSchema,
 )
 from fitness_app.file_entities.services import FileEntityService
-from fitness_app.users.models import User
 
 
 class ExerciseService:
@@ -29,18 +31,26 @@ class ExerciseService:
         self,
         session: AsyncSession,
         schema: ExerciseCreateSchema,
-        photos: Optional[list[UploadFile]],
-        user: User,
+        user_id: int,
     ):
-        exercise = Exercise(**schema.model_dump())
-        exercise.user_id = user.id
-        exercise = await self._exercise_repository.save(session, exercise)
+        exercise = Exercise(**schema.model_dump(exclude=["photo_ids"]))
+        exercise.user_id = user_id
+        exercise.photos = []
 
-        if photos:
-            for photo in photos:
-                await self._file_entity_service.create(session, photo, exercise.id)
+        if schema.photo_ids:
+            for photo_id in schema.photo_ids:
 
-        return await self._exercise_repository.get_by_id(session, exercise.id)
+                photo_entity = await self._file_entity_service.get_by_id(
+                    session, photo_id
+                )
+                if photo_entity.exercise_id:
+                    raise BadRequestException(
+                        "Photo entity with given id already have entity_id"
+                    )
+                else:
+                    exercise.photos.append(photo_entity)
+
+        return await self._exercise_repository.save(session, exercise)
 
     async def get_by_id(self, session: AsyncSession, id: int):
         exercise = await self._exercise_repository.get_by_id(session, id)
@@ -65,7 +75,6 @@ class ExerciseService:
         session: AsyncSession,
         user_id: int,
         schema: ExerciseUpdateSchema,
-        photos: list[UploadFile],
     ):
         exercise = await self._exercise_repository.get_by_id(session, schema.id)
         if not exercise:
@@ -78,18 +87,26 @@ class ExerciseService:
         update_model_by_schema(exercise, schema)
         exercise = await self._exercise_repository.save(session, exercise)
 
-        if exercise.photos:
-            for photo in exercise.photos:
-                await self._file_entity_service.delete_by_id(session, photo.id)
-        if photos:
-            for photo in photos:
-                await self._file_entity_service.create(session, photo, exercise.id)
+        if schema.photo_ids:
+            existing_set = set(photo.id for photo in exercise.photos)
+            new_set = set(schema.photo_ids)
+
+            set_ids_to_delete = existing_set - new_set
+            set_ids_to_add = new_set - existing_set
+
+            for photo_id in set_ids_to_delete:
+                await self._file_entity_service.delete_by_id(session, photo_id)
+            for photo_id in set_ids_to_add:
+                await self._file_entity_service.add_exercise_id_by_id(
+                    session, exercise.id, photo_id
+                )
 
         await session.refresh(exercise)
-        return exercise
+        return await self._exercise_repository.get_by_id(session, exercise.id)
 
     async def delete_by_id(self, session: AsyncSession, user_id: int, id: int):
         exercise = await self._exercise_repository.get_by_id(session, id)
+
         if not exercise:
             raise EntityNotFoundException("Упражнения с указанным id не найдено")
         if not exercise.user_id:
