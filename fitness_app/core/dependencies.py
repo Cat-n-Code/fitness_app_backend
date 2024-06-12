@@ -10,6 +10,7 @@ from fitness_app.core.db_manager import DatabaseManager
 from fitness_app.customers.services import CustomerService
 from fitness_app.diaries.services import DiaryService
 from fitness_app.exercises.services import ExerciseService
+from fitness_app.feedbacks.services import FeedbackService
 from fitness_app.file_entities.services import FileEntityService
 from fitness_app.messages.services import MessageService
 from fitness_app.steps.services import StepsService
@@ -74,6 +75,10 @@ def diary_service(request: Request) -> DiaryService:
     return request.app.state.diary_service
 
 
+def feedback_service(request: Request) -> FeedbackService:
+    return request.app.state.feedback_service
+
+
 DbSession = Annotated[AsyncSession, Depends(db_session)]
 AuthServiceDep = Annotated[AuthService, Depends(auth_service)]
 UserServiceDep = Annotated[UserService, Depends(user_service)]
@@ -87,3 +92,4 @@ CustomerServiceDep = Annotated[CustomerService, Depends(customer_service)]
 MessageServiceDep = Annotated[MessageService, Depends(message_service)]
 ChatServiceDep = Annotated[ChatService, Depends(chat_service)]
 DiaryServiceDep = Annotated[DiaryService, Depends(diary_service)]
+FeedbackServiceDep = Annotated[FeedbackService, Depends(feedback_service)]
