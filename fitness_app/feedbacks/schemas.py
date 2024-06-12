@@ -1,8 +1,8 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class FeedbackCreateSchema(BaseModel):
-    score: int
+    score: int = Field(ge=1, le=5)
 
 
 class FeedbackSchema(FeedbackCreateSchema):
