@@ -8,6 +8,7 @@ from fitness_app.customers.schemas import ExercisePreference, FitnessLevel, User
 
 if TYPE_CHECKING:
     from fitness_app.coaches.models import Coach
+    from fitness_app.feedbacks.models import Feedback
     from fitness_app.users.models import User
     from fitness_app.workouts.models import Workout
 
@@ -27,3 +28,4 @@ class Customer(Base):
         "Coach", back_populates="customers", secondary="coaches_customers"
     )
     workouts: Mapped[list["Workout"]] = relationship(back_populates="customer")
+    feedbacks: Mapped[list["Feedback"]] = relationship(back_populates="customer")
