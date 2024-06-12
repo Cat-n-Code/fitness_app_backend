@@ -87,18 +87,19 @@ class ExerciseService:
         update_model_by_schema(exercise, schema)
         exercise = await self._exercise_repository.save(session, exercise)
 
-        existing_set = set(photo.id for photo in exercise.photos)
-        new_set = set(schema.photo_ids)
+        if schema.photo_ids:
+            existing_set = set(photo.id for photo in exercise.photos)
+            new_set = set(schema.photo_ids)
 
-        set_ids_to_delete = existing_set - new_set
-        set_ids_to_add = new_set - existing_set
+            set_ids_to_delete = existing_set - new_set
+            set_ids_to_add = new_set - existing_set
 
-        for photo_id in set_ids_to_delete:
-            await self._file_entity_service.delete_by_id(session, photo_id)
-        for photo_id in set_ids_to_add:
-            await self._file_entity_service.add_exercise_id_by_id(
-                session, exercise.id, photo_id
-            )
+            for photo_id in set_ids_to_delete:
+                await self._file_entity_service.delete_by_id(session, photo_id)
+            for photo_id in set_ids_to_add:
+                await self._file_entity_service.add_exercise_id_by_id(
+                    session, exercise.id, photo_id
+                )
 
         await session.refresh(exercise)
         return await self._exercise_repository.get_by_id(session, exercise.id)
