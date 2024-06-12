@@ -1,4 +1,3 @@
-from datetime import date
 from typing import Optional
 
 from sqlalchemy import and_, null, or_, select
@@ -49,8 +48,6 @@ class WorkoutRepository:
         find_schema: Optional[WorkoutFindSchema],
         page: int,
         size: int,
-        date_start: Optional[date] = None,
-        date_finish: Optional[date] = None,
     ):
         statement = select(Workout)
 
@@ -68,11 +65,6 @@ class WorkoutRepository:
                     and_(Workout.coach_id == null(), Workout.customer_id == null()),
                 )
             )
-
-        if date_start:
-            statement = statement.where(Workout.date_field >= date_start)
-        if date_finish:
-            statement = statement.where(Workout.date_field <= date_finish)
 
         if find_schema:
             if find_schema.name:
@@ -93,7 +85,7 @@ class WorkoutRepository:
         statement = (
             statement.offset(page * size)
             .limit(size)
-            .order_by(Workout.date_field, Workout.time_start)
+            .order_by(Workout.time_start)
             .options(
                 joinedload(Workout.customer),
                 joinedload(Workout.coach),

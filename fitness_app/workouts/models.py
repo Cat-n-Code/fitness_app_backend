@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import ForeignKey
@@ -37,7 +37,6 @@ class Workout(Base):
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), nullable=True)
     name: Mapped[str] = mapped_column(nullable=False)
     type_connection: Mapped[str] = mapped_column(nullable=True)
-    date_field: Mapped[date] = mapped_column(nullable=True)
     time_start: Mapped[datetime] = mapped_column(nullable=True)
 
     exercise_workouts: Mapped[Optional[list["ExerciseWorkout"]]] = relationship(

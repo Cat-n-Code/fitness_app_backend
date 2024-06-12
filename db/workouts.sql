@@ -80,8 +80,8 @@ ALTER TABLE ONLY public.workouts ALTER COLUMN id SET DEFAULT nextval('public.wor
 -- Data for Name: workouts; Type: TABLE DATA; Schema: public; Owner: user
 --
 
-COPY public.workouts (id, coach_id, customer_id, chat_id, name, type_connection, date_field, time_start) FROM stdin;
-1	\N	\N	\N	Руки	ONLINE	2024-06-10	2024-06-10 11:20:20.794
+COPY public.workouts (id, coach_id, customer_id, chat_id, name, type_connection, time_start) FROM stdin;
+1	\N	\N	\N	Руки	ONLINE	2024-06-10 11:20:20.794
 \.
 
 
