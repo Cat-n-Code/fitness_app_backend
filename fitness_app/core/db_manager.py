@@ -33,6 +33,7 @@ class DatabaseManager:
         from fitness_app.customers.models import Customer
         from fitness_app.diaries.models import DiaryEntry
         from fitness_app.exercises.models import Exercise
+        from fitness_app.feedbacks.models import Feedback
         from fitness_app.file_entities.models import FileEntity
         from fitness_app.messages.models import Message
         from fitness_app.steps.models import StepsEntry

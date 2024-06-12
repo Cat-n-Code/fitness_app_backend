@@ -36,18 +36,33 @@ async def get_all(
 
 
 @coaches_router.get(
-    "/id/{user_id}",
-    summary="Получить тренера по customer_id",
+    "/id/{coach_id}",
+    summary="Получить тренера по coach_id",
     response_model=CoachSchema,
     # dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def get(
     session: DbSession,
     service: CoachServiceDep,
+    coach_id: IdField,
+):
+    coach = await service.get_by_id(session, coach_id)
+    return CoachSchema.model_validate(coach)
+
+
+@coaches_router.get(
+    "/user_id/{user_id}",
+    summary="Получить тренера по user_id",
+    response_model=CoachSchema,
+    # dependencies=[Depends(HasPermission(Authenticated()))],
+)
+async def get_by_usesr_id(
+    session: DbSession,
+    service: CoachServiceDep,
     user_id: IdField,
 ):
-    user = await service.get_by_id(session, user_id)
-    return CoachSchema.model_validate(user)
+    coach = await service.get_by_user_id(session, user_id)
+    return CoachSchema.model_validate(coach)
 
 
 @coaches_router.post(

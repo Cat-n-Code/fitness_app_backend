@@ -1,4 +1,4 @@
-from sqlalchemy import exists, func, select
+from sqlalchemy import and_, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -43,15 +43,26 @@ class UserRepository:
         result = await session.execute(statement)
         return result.scalar_one()
 
+    async def is_exists_assignment(
+        self, session: AsyncSession, customer_id: int, coach_id: int
+    ):
+        statement = select(
+            exists().where(
+                (
+                    and_(
+                        CoachesCustomers.customer_id == customer_id,
+                        CoachesCustomers.coach_id == coach_id,
+                    )
+                )
+            )
+        )
+        result = await session.execute(statement)
+        return result.scalar_one()
+
     async def assign_coach_custoemer(
         self, session: AsyncSession, customer_id: int, coach_id: int
     ) -> Coach:
-        existing_relationship = await session.execute(
-            select(CoachesCustomers)
-            .where(CoachesCustomers.customer_id == customer_id)
-            .where(CoachesCustomers.coach_id == coach_id)
-        )
-        if existing_relationship.scalar_one_or_none() is not None:
+        if await self.is_exists_assignment(session, customer_id, coach_id):
             raise EntityAlreadyExistsException(
                 "coach already assigned to to this customer"
             )
@@ -89,12 +100,7 @@ class UserRepository:
     async def unassign_coach_custoemer(
         self, session: AsyncSession, customer_id: int, coach_id: int
     ) -> Coach:
-        existing_relationship = await session.execute(
-            select(CoachesCustomers)
-            .where(CoachesCustomers.customer_id == customer_id)
-            .where(CoachesCustomers.coach_id == coach_id)
-        )
-        if existing_relationship.scalar_one_or_none() is None:
+        if not await self.is_exists_assignment(session, customer_id, coach_id):
             raise EntityAlreadyExistsException(
                 "coach is not assigned to to this customer yet"
             )
