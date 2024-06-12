@@ -4,14 +4,20 @@ from sqlalchemy.orm import joinedload
 
 from fitness_app.coaches.models import Coach
 from fitness_app.customers.models import Customer
+from fitness_app.feedbacks.models import Feedback
 from fitness_app.users.models import CoachesCustomers
 
 
 class CoachRepository:
-
     async def save(self, session: AsyncSession, coach: Coach):
         session.add(coach)
         await session.flush()
+        await session.commit()
+        new_score = await self.get_average_rating(session, coach.id)
+        if new_score is None:
+            setattr(coach, "rating", 5)
+        else:
+            setattr(coach, "rating", new_score)
         await session.commit()
         return coach
 
@@ -75,3 +81,23 @@ class CoachRepository:
         statement = select(func.count()).select_from(Coach)
         result = await session.execute(statement)
         return result.scalar_one()
+
+    async def get_average_rating(self, session: AsyncSession, coach_id: int):
+        statement = select(func.avg(Feedback.score)).where(
+            Feedback.coach_id == coach_id
+        )
+        result = await session.execute(statement)
+        return result.scalar_one()
+
+    async def add_feedback(
+        self, session: AsyncSession, coach_id: int, feedback: Feedback
+    ):
+        statement = (
+            select(Coach)
+            .where(Coach.id == coach_id)
+            .options(joinedload(Coach.feedbacks))
+        )
+        result = await session.execute(statement)
+        coach = result.unique().scalar_one()
+        coach.feedbacks.append(feedback)
+        await self.save(session, coach)

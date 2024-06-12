@@ -32,4 +32,4 @@ class CoachSaveSchema(CoachBaseSchema):
 class CoachSchema(CoachSaveSchema):
 
     id: int
-    rating: int
+    rating: float
