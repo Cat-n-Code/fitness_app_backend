@@ -56,6 +56,7 @@ class ExerciseService:
         exercise = await self._exercise_repository.get_by_id(session, id)
         if not exercise:
             raise EntityNotFoundException("Упражнения с указанным id не найдено")
+
         return exercise
 
     async def get_by_user_id(
@@ -87,7 +88,7 @@ class ExerciseService:
         update_model_by_schema(exercise, schema)
         exercise = await self._exercise_repository.save(session, exercise)
 
-        if schema.photo_ids:
+        if schema.photo_ids or schema.photo_ids == []:
             existing_set = set(photo.id for photo in exercise.photos)
             new_set = set(schema.photo_ids)
 

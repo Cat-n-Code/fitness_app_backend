@@ -4,8 +4,13 @@ from fastapi import APIRouter, Depends, Path, Query, status
 
 from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
 from fitness_app.auth.permissions import Authenticated
-from fitness_app.core.dependencies import DbSession, ExerciseServiceDep
+from fitness_app.core.dependencies import (
+    DbSession,
+    ExerciseServiceDep,
+    FileEntityServiceDep,
+)
 from fitness_app.core.utils import PageField, SizeField
+from fitness_app.exercises.models import Exercise
 from fitness_app.exercises.schemas import (
     Difficulty,
     ExerciseCreateSchema,
@@ -14,6 +19,15 @@ from fitness_app.exercises.schemas import (
     ExerciseType,
     ExerciseUpdateSchema,
 )
+
+
+async def exercise_to_schema(
+    session: DbSession, file_service: FileEntityServiceDep, exercise: Exercise
+) -> ExerciseSchema:
+
+    for photo in exercise.photos:
+        photo.full_url = await file_service.get_by_filename(session, photo.filename)
+    return exercise
 
 
 def get_exercise_find_schema(
@@ -48,14 +62,12 @@ exercises_router = APIRouter(prefix="/exercises", tags=["Упражнения"])
 async def create(
     session: DbSession,
     service: ExerciseServiceDep,
+    file_service: FileEntityServiceDep,
     user: AuthenticateUser,
     schema: ExerciseCreateSchema,
 ) -> ExerciseSchema:
-    return await service.create(
-        session,
-        schema,
-        user.id,
-    )
+    exercise = await service.create(session, schema, user.id)
+    return await exercise_to_schema(session, file_service, exercise)
 
 
 @exercises_router.get(
@@ -70,9 +82,13 @@ async def create(
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def get_by_id(
-    session: DbSession, service: ExerciseServiceDep, id: Annotated[int, Path]
+    session: DbSession,
+    service: ExerciseServiceDep,
+    file_service: FileEntityServiceDep,
+    id: Annotated[int, Path],
 ) -> ExerciseSchema:
-    return await service.get_by_id(session, id)
+    exercise = await service.get_by_id(session, id)
+    return await exercise_to_schema(session, file_service, exercise)
 
 
 @exercises_router.get(
@@ -84,12 +100,18 @@ async def get_by_id(
 async def get_by_user_id(
     session: DbSession,
     service: ExerciseServiceDep,
+    file_service: FileEntityServiceDep,
     user: AuthenticateUser,
     find_schema: Optional[ExerciseFindSchema] = Depends(get_exercise_find_schema),
     page: PageField = 0,
     size: SizeField = 10,
 ) -> list[ExerciseSchema]:
-    return await service.get_by_user_id(session, user.id, find_schema, page, size)
+    exercises = await service.get_by_user_id(session, user.id, find_schema, page, size)
+    exercises_schema = [
+        await exercise_to_schema(session, file_service, exercise)
+        for exercise in exercises
+    ]
+    return exercises_schema
 
 
 @exercises_router.put(
@@ -109,16 +131,18 @@ async def get_by_user_id(
 async def update_by_id(
     session: DbSession,
     service: ExerciseServiceDep,
+    file_service: FileEntityServiceDep,
     user: AuthenticateUser,
     schema: ExerciseUpdateSchema,
 ) -> ExerciseSchema:
-    return await service.update_by_id(session, user.id, schema)
+    exercise = await service.update_by_id(session, user.id, schema)
+    return await exercise_to_schema(session, file_service, exercise)
 
 
 @exercises_router.delete(
     "/{id}",
     summary="Удаление задания по id",
-    response_model=ExerciseSchema,
+    response_model=str,
     responses={
         status.HTTP_403_FORBIDDEN: {
             "description": "Можно изменять только свои упражнения"
@@ -134,5 +158,6 @@ async def delete_by_id(
     service: ExerciseServiceDep,
     user: AuthenticateUser,
     id: Annotated[int, Path],
-) -> ExerciseSchema:
-    return await service.delete_by_id(session, user.id, id)
+) -> str:
+    await service.delete_by_id(session, user.id, id)
+    return "OK"
