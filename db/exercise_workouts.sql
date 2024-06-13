@@ -80,12 +80,12 @@ ALTER TABLE ONLY public.exercise_workouts ALTER COLUMN id SET DEFAULT nextval('p
 -- Data for Name: exercise_workouts; Type: TABLE DATA; Schema: public; Owner: user
 --
 
-COPY public.exercise_workouts (id, exercise_id, workout_id, num_order, num_sets, num_sets_done, num_reps) FROM stdin;
-1	1	1	1	5	0	10
-2	2	1	2	5	0	8
-3	3	1	3	4	0	5
-4	4	1	4	5	0	10
-5	5	1	5	3	0	5
+COPY public.exercise_workouts (id, exercise_id, workout_id, num_order, num_sets, num_sets_done, num_reps, stage) FROM stdin;
+1	1	1	1	5	0	10	MAIN
+2	2	1	2	5	0	8	WARM_UP
+3	3	1	3	4	0	5	MAIN
+4	4	1	4	5	0	10	COOL_DOWN
+5	5	1	5	3	0	5	MAIN
 \.
 
 

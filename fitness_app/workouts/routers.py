@@ -8,9 +8,11 @@ from fitness_app.auth.permissions import Authenticated
 from fitness_app.core.dependencies import (
     DbSession,
     ExerciseWorkoutServiceDep,
+    FileEntityServiceDep,
     WorkoutServiceDep,
 )
 from fitness_app.core.utils import PageField, SizeField
+from fitness_app.workouts.models import ExerciseWorkout, Workout
 from fitness_app.workouts.schemas import (
     ExerciseWorkoutCreateSchema,
     ExerciseWorkoutSchema,
@@ -21,6 +23,30 @@ from fitness_app.workouts.schemas import (
     WorkoutSchema,
     WorkoutUpdateSchema,
 )
+
+
+async def exercise_workout_to_schema(
+    session: DbSession,
+    file_service: FileEntityServiceDep,
+    exercise_workout: ExerciseWorkout,
+) -> ExerciseWorkout:
+
+    for photo in exercise_workout.exercise.photos:
+        photo.full_url = await file_service.get_by_filename(session, photo.filename)
+
+    return exercise_workout
+
+
+async def workout_to_schema(
+    session: DbSession, file_service: FileEntityServiceDep, workout: Workout
+) -> WorkoutSchema:
+
+    for exercise_workout in workout.exercise_workouts:
+        exercise_workout = await exercise_workout_to_schema(
+            session, file_service, exercise_workout
+        )
+
+    return workout
 
 
 def get_workout_find_schema(
@@ -54,10 +80,12 @@ workouts_router = APIRouter(prefix="/workouts", tags=["Тренировки"])
 async def create(
     session: DbSession,
     service: WorkoutServiceDep,
+    file_service: FileEntityServiceDep,
     user: AuthenticateUser,
     schema: WorkoutCreateSchema,
 ) -> WorkoutSchema:
-    return await service.create(session, user, schema)
+    workout = await service.create(session, user, schema)
+    return await workout_to_schema(session, file_service, workout)
 
 
 @workouts_router.get(
@@ -74,28 +102,59 @@ async def create(
 async def get_by_id(
     session: DbSession,
     service: WorkoutServiceDep,
+    file_service: FileEntityServiceDep,
     id: Annotated[int, Path],
 ) -> WorkoutSchema:
-    return await service.get_by_id(session, id)
+    workout = await service.get_by_id(session, id)
+    return await workout_to_schema(session, file_service, workout)
 
 
 @workouts_router.get(
-    "/users/current",
+    "/users/{user_id}",
     response_model=list[WorkoutSchema],
-    summary="Получить список тренировок текущего пользователя",
+    summary="Получить список тренировок по user_id",
     dependencies=[Depends(HasPermission(Authenticated()))],
 )
 async def get_workouts_by_user_id(
     session: DbSession,
     service: WorkoutServiceDep,
+    file_service: FileEntityServiceDep,
+    user_id: Annotated[int, Path],
+    find_schema: Optional[WorkoutFindSchema] = Depends(get_workout_find_schema),
+    page: PageField = 0,
+    size: SizeField = 10,
+) -> list[WorkoutSchema]:
+    workouts = await service.get_workouts_by_user_id(
+        session, user_id, find_schema, page, size
+    )
+    workouts_schema = [
+        await workout_to_schema(session, file_service, workout) for workout in workouts
+    ]
+    return workouts_schema
+
+
+@workouts_router.get(
+    "/users/get/me",
+    response_model=list[WorkoutSchema],
+    summary="Получить список тренировок текущего пользователя",
+    dependencies=[Depends(HasPermission(Authenticated()))],
+)
+async def get_workouts_by_current_user(
+    session: DbSession,
+    service: WorkoutServiceDep,
+    file_service: FileEntityServiceDep,
     user: AuthenticateUser,
     find_schema: Optional[WorkoutFindSchema] = Depends(get_workout_find_schema),
     page: PageField = 0,
     size: SizeField = 10,
 ) -> list[WorkoutSchema]:
-    return await service.get_workouts_by_user_id(
+    workouts = await service.get_workouts_by_user_id(
         session, user.id, find_schema, page, size
     )
+    workouts_schema = [
+        await workout_to_schema(session, file_service, workout) for workout in workouts
+    ]
+    return workouts_schema
 
 
 @workouts_router.put(
@@ -116,19 +175,18 @@ async def update_by_id(
     session: DbSession,
     user: AuthenticateUser,
     service: WorkoutServiceDep,
+    file_service: FileEntityServiceDep,
     schema: WorkoutUpdateSchema,
 ) -> WorkoutSchema:
-    return await service.update_by_id(
-        session,
-        user,
-        schema,
-    )
+
+    workout = await service.update_by_id(session, user, schema)
+    return await workout_to_schema(session, file_service, workout)
 
 
 @workouts_router.delete(
     "/{id}",
     summary="Удаление тренировки по id",
-    response_model=WorkoutSchema,
+    response_model=str,
     responses={
         status.HTTP_403_FORBIDDEN: {
             "description": "Нельзя изменять не вашу тренировку"
@@ -143,9 +201,12 @@ async def delete_by_id(
     session: DbSession,
     user: AuthenticateUser,
     service: WorkoutServiceDep,
+    file_service: FileEntityServiceDep,
     id: Annotated[int, Path],
-) -> WorkoutSchema:
-    return await service.delete_by_id(session, user, id)
+) -> str:
+
+    await service.delete_by_id(session, user, id)
+    return "OK"
 
 
 @workouts_router.post(
@@ -162,10 +223,13 @@ async def delete_by_id(
 async def create_exercise_workout(
     session: DbSession,
     service: ExerciseWorkoutServiceDep,
+    file_service: FileEntityServiceDep,
     user: AuthenticateUser,
     schema: ExerciseWorkoutCreateSchema,
 ) -> ExerciseWorkoutSchema:
-    return await service.create(session, user, schema)
+
+    exercise_workout = await service.create(session, user, schema)
+    return await exercise_workout_to_schema(session, file_service, exercise_workout)
 
 
 @workouts_router.put(
@@ -186,19 +250,18 @@ async def update_exercise_workout_by_id(
     session: DbSession,
     user: AuthenticateUser,
     service: ExerciseWorkoutServiceDep,
+    file_service: FileEntityServiceDep,
     schema: ExerciseWorkoutUpdateSchema,
 ) -> ExerciseWorkoutSchema:
-    return await service.update_by_id(
-        session,
-        user,
-        schema,
-    )
+
+    exercise_workout = await service.update_by_id(session, user, schema)
+    return await exercise_workout_to_schema(session, file_service, exercise_workout)
 
 
 @workouts_router.delete(
     "/exercises/{exercise_workout_id}",
     summary="Удаление задания для тренировки по id",
-    response_model=ExerciseWorkoutSchema,
+    response_model=str,
     responses={
         status.HTTP_403_FORBIDDEN: {
             "description": "Нельзя изменять не вашу тренировку"
@@ -213,6 +276,9 @@ async def delete_exercise_workout_by_id(
     session: DbSession,
     user: AuthenticateUser,
     service: ExerciseWorkoutServiceDep,
+    file_service: FileEntityServiceDep,
     exercise_workout_id: Annotated[int, Path],
-) -> ExerciseWorkoutSchema:
-    return await service.delete_by_id(session, user, exercise_workout_id)
+) -> str:
+
+    await service.delete_by_id(session, user, exercise_workout_id)
+    return "OK"
