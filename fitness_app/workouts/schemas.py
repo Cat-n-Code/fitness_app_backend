@@ -15,6 +15,12 @@ class TypeConnection(StrEnum):
     OFFLINE = "OFFLINE"
 
 
+class Stages(StrEnum):
+    WARM_UP = "WARM_UP"
+    MAIN = "MAIN"
+    COOL_DOWN = "COOL_DOWN"
+
+
 class ExerciseWorkoutSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -25,6 +31,7 @@ class ExerciseWorkoutSchema(BaseModel):
     num_sets: Optional[int] = None
     num_sets_done: int
     num_reps: Optional[int] = None
+    stage: Stages
 
     exercise: Optional["ExerciseSchema"] = None
 
@@ -36,6 +43,7 @@ class ExerciseWorkoutCreateSchema(BaseModel):
     num_sets: Optional[int] = None
     num_sets_done: Optional[int] = None
     num_reps: Optional[int] = None
+    stage: Stages
 
 
 class ExerciseWorkoutUpdateSchema(BaseModel):
@@ -45,6 +53,7 @@ class ExerciseWorkoutUpdateSchema(BaseModel):
     num_sets: Optional[int] = None
     num_sets_done: Optional[int] = None
     num_reps: Optional[int] = None
+    stage: Stages
 
 
 class WorkoutCreateExerciseWorkoutSchema(BaseModel):
@@ -53,6 +62,7 @@ class WorkoutCreateExerciseWorkoutSchema(BaseModel):
     num_sets: Optional[int] = None
     num_sets_done: Optional[int] = None
     num_reps: Optional[int] = None
+    stage: Stages
 
 
 class WorkoutSchema(BaseModel):

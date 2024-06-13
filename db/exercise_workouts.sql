@@ -34,7 +34,8 @@ CREATE TABLE public.exercise_workouts (
     num_order integer NOT NULL,
     num_sets integer,
     num_sets_done integer NOT NULL,
-    num_reps integer
+    num_reps integer,
+    stage character varying NOT NULL
 );
 
 
