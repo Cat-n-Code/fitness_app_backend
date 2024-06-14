@@ -6,7 +6,7 @@ class AppSettings(BaseSettings):
 
     db_url: str
     cors_allowed_origins: list[str]
-    auth_token_lifetime: int = 3600
+    auth_token_lifetime: int = 86400
     auth_token_secret_key: str
 
     default_steps_goal: int = 8000
