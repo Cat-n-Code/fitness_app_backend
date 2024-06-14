@@ -37,28 +37,28 @@ class ExerciseRepository:
         )
         if find_schema:
             if find_schema.name:
-                statement = statement.where(Exercise.name.contains(find_schema.name))
+                statement = statement.where(Exercise.name.icontains(find_schema.name))
             if find_schema.muscle:
                 statement = statement.where(
-                    Exercise.muscle.contains(find_schema.muscle)
+                    Exercise.muscle.icontains(find_schema.muscle)
                 )
             if find_schema.additionalMuscle:
                 statement = statement.where(
-                    Exercise.additionalMuscle.contains(find_schema.additionalMuscle)
+                    Exercise.additionalMuscle.icontains(find_schema.additionalMuscle)
                 )
             if find_schema.type:
-                statement = statement.where(Exercise.type.contains(find_schema.type))
+                statement = statement.where(Exercise.type == find_schema.type)
             if find_schema.equipment:
                 statement = statement.where(
-                    Exercise.equipment.contains(find_schema.equipment)
+                    Exercise.equipment.icontains(find_schema.equipment)
                 )
             if find_schema.difficulty:
                 statement = statement.where(
-                    Exercise.difficulty.contains(find_schema.difficulty)
+                    Exercise.difficulty == find_schema.difficulty
                 )
             if find_schema.description:
                 statement = statement.where(
-                    Exercise.description.contains(find_schema.description)
+                    Exercise.description.icontains(find_schema.description)
                 )
         statement = (
             statement.offset(page * size)
