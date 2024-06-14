@@ -47,14 +47,14 @@ class ExerciseRepository:
                     Exercise.additionalMuscle.icontains(find_schema.additionalMuscle)
                 )
             if find_schema.type:
-                statement = statement.where(Exercise.type.icontains(find_schema.type))
+                statement = statement.where(Exercise.type == find_schema.type)
             if find_schema.equipment:
                 statement = statement.where(
                     Exercise.equipment.icontains(find_schema.equipment)
                 )
             if find_schema.difficulty:
                 statement = statement.where(
-                    Exercise.difficulty.icontains(find_schema.difficulty)
+                    Exercise.difficulty == find_schema.difficulty
                 )
             if find_schema.description:
                 statement = statement.where(
