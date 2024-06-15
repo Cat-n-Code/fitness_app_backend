@@ -1,4 +1,6 @@
 #
+# script uses old api version
+#
 # save the "image" directory in the current directory
 #
 import json
