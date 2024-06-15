@@ -16,3 +16,8 @@
     docker compose -f docker-compose.yaml -f docker-compose.dev.yaml down
     ```
     
+## Использование
+Перед использованием вам нужно пройти аутенфикацию:
+1. Зарегестрируйтесь в качестве клиента или тренера. (/customers/registration, /coaches/registration)
+2. Пройдите аутенфикацию. Введите логин и пароль. Получите token. (/auth/login)
+3. Введите token через зеленую кнопку "Authorize" в правом верхнем углу веб-страницы /docs
