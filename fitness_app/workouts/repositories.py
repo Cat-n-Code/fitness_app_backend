@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import and_, null, select
+from sqlalchemy import and_, null, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -53,7 +53,10 @@ class WorkoutRepository:
 
         if coach_id:
             statement = statement.where(
-                and_(Workout.coach_id == null(), Workout.customer_id == null())
+                or_(
+                    Workout.coach_id == coach_id,
+                    and_(Workout.coach_id == null(), Workout.customer_id == null()),
+                )
             )
         elif customer_id:
             statement = statement.where(Workout.customer_id == customer_id)
