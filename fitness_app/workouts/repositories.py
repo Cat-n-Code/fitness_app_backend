@@ -54,12 +54,14 @@ class WorkoutRepository:
         if coach_id:
             statement = statement.where(
                 or_(
-                    Workout.coach_id == coach_id,
+                    and_(Workout.coach_id == coach_id, Workout.customer_id == null()),
                     and_(Workout.coach_id == null(), Workout.customer_id == null()),
                 )
             )
         elif customer_id:
-            statement = statement.where(Workout.customer_id == customer_id)
+            statement = statement.where(
+                and_(Workout.coach_id.isnot(None), Workout.customer_id == customer_id)
+            )
 
         if find_schema:
             if find_schema.name:
