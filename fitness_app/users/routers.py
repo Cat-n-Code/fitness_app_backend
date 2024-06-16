@@ -35,7 +35,7 @@ async def get_all(
 
 @users_router.get(
     "/id/{user_id}",
-    summary="Получить пользователя по customer_id",
+    summary="Получить пользователя по user_id",
     response_model=UserSchema,
     # dependencies=[Depends(HasPermission(Authenticated()))],
 )
@@ -46,24 +46,6 @@ async def get(
 ):
     user = await service.get_by_id(session, user_id)
     return UserSchema.model_validate(user)
-
-
-# @users_router.post(
-#     "/registration",
-#     summary="Регистрация нового пользователя",
-#     response_model=UserSchema,
-#     responses={
-#         status.HTTP_409_CONFLICT: {
-#             "description": "Другой пользователь с указанным `email` уже существует"
-#         }
-#     },
-#     dependencies=[Depends(HasPermission(Anonymous()))],
-# )
-# async def register_user(
-#     session: DbSession, service: UserServiceDep, schema: UserCreateSchema
-# ):
-#     user = await service.create(session, schema)
-#     return UserSchema.model_validate(user)
 
 
 @users_router.get(
