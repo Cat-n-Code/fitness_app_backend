@@ -4,6 +4,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fitness_app.core.db_manager import Base
+from fitness_app.diaries.models import DiaryEntry
 
 if TYPE_CHECKING:
     from fitness_app.exercises.models import Exercise
@@ -19,3 +20,4 @@ class FileEntity(Base):
     filename: Mapped[str] = mapped_column(unique=True, nullable=False)
 
     exercise: Mapped["Exercise"] = relationship(back_populates="photos")
+    diary: Mapped["DiaryEntry"] = relationship(back_populates="voice_note")
