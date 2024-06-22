@@ -1,6 +1,5 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 from fitness_app.messages.models import Message
 

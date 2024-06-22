@@ -14,6 +14,7 @@ from fitness_app.feedbacks.services import FeedbackService
 from fitness_app.file_entities.services import FileEntityService
 from fitness_app.messages.services import MessageService
 from fitness_app.steps.services import StepsService
+from fitness_app.store.services import StoreService
 from fitness_app.users.services import UserService
 from fitness_app.water_entries.services import WaterEntryService
 from fitness_app.workouts.ExerciseWorkoutService import ExerciseWorkoutService
@@ -85,6 +86,10 @@ def feedback_service(request: Request) -> FeedbackService:
     return request.app.state.feedback_service
 
 
+def store_service(request: Request) -> StoreService:
+    return request.app.state.store_service
+
+
 DbSession = Annotated[AsyncSession, Depends(db_session)]
 AuthServiceDep = Annotated[AuthService, Depends(auth_service)]
 UserServiceDep = Annotated[UserService, Depends(user_service)]
@@ -102,3 +107,4 @@ MessageServiceDep = Annotated[MessageService, Depends(message_service)]
 ChatServiceDep = Annotated[ChatService, Depends(chat_service)]
 DiaryServiceDep = Annotated[DiaryService, Depends(diary_service)]
 FeedbackServiceDep = Annotated[FeedbackService, Depends(feedback_service)]
+StoreServiceDep = Annotated[StoreService, Depends(store_service)]
