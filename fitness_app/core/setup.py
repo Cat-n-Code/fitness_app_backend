@@ -172,7 +172,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     )
     message_service = MessageService(message_repository, chat_service)
     steps_service = StepsService(steps_repository, settings.default_steps_goal)
-    diary_service = DiaryService(diary_repository)
+    diary_service = DiaryService(diary_repository, file_entity_service)
     feedback_service = FeedbackService(
         feedback_repository, user_repository, coach_repository, coach_service
     )
