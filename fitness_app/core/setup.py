@@ -43,6 +43,9 @@ from fitness_app.messages.services import MessageService
 from fitness_app.steps.repositories import StepsRepository
 from fitness_app.steps.routers import steps_router
 from fitness_app.steps.services import StepsService
+from fitness_app.store.repositories import StoreRepository
+from fitness_app.store.routers import store_router
+from fitness_app.store.services import StoreService
 from fitness_app.users.repositories import UserRepository
 from fitness_app.users.routers import users_router
 from fitness_app.users.services import UserService
@@ -104,6 +107,7 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     app.include_router(steps_router)
     app.include_router(diaries_router)
     app.include_router(feedbacks_router)
+    app.include_router(store_router)
 
     """ Setup exception handlers """
     app.add_exception_handler(AppException, handle_app_exception)
@@ -129,6 +133,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     steps_repository = StepsRepository()
     diary_repository = DiaryRepository()
     feedback_repository = FeedbackRepository()
+    store_repository = StoreRepository()
 
     password_service = PasswordService()
     password_service = PasswordService()
@@ -176,6 +181,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     feedback_service = FeedbackService(
         feedback_repository, user_repository, coach_repository, coach_service
     )
+    store_service = StoreService(store_repository)
 
     app.state.workout_service = workout_service
     app.state.exercise_workout_service = exercise_workout_service
@@ -191,6 +197,7 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     app.state.steps_service = steps_service
     app.state.diary_service = diary_service
     app.state.feedback_service = feedback_service
+    app.state.store_service = store_service
 
 
 @asynccontextmanager
