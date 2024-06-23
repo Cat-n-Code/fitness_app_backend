@@ -2,7 +2,6 @@ from datetime import date
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fitness_app.core.schemas import PageSchema
 from fitness_app.core.utils import update_model_by_schema
 from fitness_app.water_entries.models import WaterEntry
 from fitness_app.water_entries.repositories import WaterEntryRepository
@@ -18,12 +17,12 @@ class WaterEntryService:
 
     async def get_by_dates(
         self, session: AsyncSession, user_id: int, date_start: date, date_finish: date
-    ) -> PageSchema:
+    ) -> list[WaterEntry]:
         water_entries = await self._water_entry_repository.get_by_dates(
             session, user_id, date_start, date_finish
         )
 
-        return PageSchema(total_items_count=len(water_entries), items=water_entries)
+        return water_entries
 
     async def create_or_update(
         self, session: AsyncSession, user_id: int, schema: WaterEntryCreateSchema

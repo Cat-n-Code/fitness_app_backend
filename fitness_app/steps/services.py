@@ -2,7 +2,6 @@ from datetime import date
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fitness_app.core.schemas import PageSchema
 from fitness_app.core.utils import update_model_by_schema
 from fitness_app.steps.models import StepsEntry
 from fitness_app.steps.repositories import StepsRepository
@@ -22,7 +21,7 @@ class StepsService:
             session, user_id, date_start, date_finish
         )
 
-        return PageSchema(total_items_count=len(steps), items=steps)
+        return steps
 
     async def create_or_update(
         self, session: AsyncSession, user_id: int, schema: StepsCreateSchema
