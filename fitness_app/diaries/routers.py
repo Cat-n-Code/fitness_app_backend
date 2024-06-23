@@ -9,6 +9,7 @@ from fitness_app.core.dependencies import (
     DiaryServiceDep,
     FileEntityServiceDep,
 )
+from fitness_app.core.schemas import PageSchema
 from fitness_app.diaries.models import DiaryEntry
 from fitness_app.diaries.schemas import DiaryCreateSchema, DiarySchema
 
@@ -29,7 +30,7 @@ async def diary_to_schema(
 @diaries_router.get(
     "",
     summary="Получить дневники за определенный период",
-    response_model=list[DiarySchema],
+    response_model=PageSchema,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "description": "Дневники за данный период не были найдены"
@@ -44,9 +45,13 @@ async def get_diaries_by_dates(
     user: AuthenticateUser,
     date_start: date,
     date_finish: date,
-) -> list[DiarySchema]:
+) -> PageSchema:
     diaries = await service.get_by_dates(session, user.id, date_start, date_finish)
-    return [await diary_to_schema(session, file_service, diary) for diary in diaries]
+    diaries = [await diary_to_schema(session, file_service, diary) for diary in diaries]
+    return PageSchema(
+        total_items_count=len(diaries),
+        items=list(map(DiarySchema.model_validate, diaries)),
+    )
 
 
 @diaries_router.put(

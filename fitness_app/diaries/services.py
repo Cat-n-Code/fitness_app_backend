@@ -2,7 +2,7 @@ from datetime import date
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fitness_app.core.exceptions import BadRequestException, EntityNotFoundException
+from fitness_app.core.exceptions import BadRequestException
 from fitness_app.core.utils import update_model_by_schema
 from fitness_app.diaries.models import DiaryEntry
 from fitness_app.diaries.repositories import DiaryRepository
@@ -23,9 +23,6 @@ class DiaryService:
         diaries = await self._diary_repository.get_by_dates(
             session, user_id, date_start, date_finish
         )
-        if not diaries:
-            raise EntityNotFoundException("Дневники за данный период не были найдены")
-
         return diaries
 
     async def create(
