@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, status
 from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
 from fitness_app.auth.permissions import Authenticated
 from fitness_app.core.dependencies import DbSession, WaterEntryServiceDep
-from fitness_app.core.schemas import PageSchema
 from fitness_app.water_entries.schemas import WaterEntryCreateSchema, WaterEntrySchema
 
 water_entries_router = APIRouter(prefix="/waters", tags=["Вода"])
@@ -14,7 +13,7 @@ water_entries_router = APIRouter(prefix="/waters", tags=["Вода"])
 @water_entries_router.get(
     "",
     summary="Получить водные сущности за определенный период",
-    response_model=PageSchema,
+    response_model=list[WaterEntrySchema],
     responses={
         status.HTTP_404_NOT_FOUND: {
             "description": "Сущность воды с указанными датами не была найдена"
@@ -28,15 +27,12 @@ async def get_water_entries_by_dates(
     user: AuthenticateUser,
     date_start: date,
     date_finish: date,
-) -> PageSchema:
+) -> list[WaterEntrySchema]:
 
     water_entries = await service.get_by_dates(
         session, user.id, date_start, date_finish
     )
-    return PageSchema(
-        total_items_count=water_entries.total_items_count,
-        items=list(map(WaterEntrySchema.model_validate, water_entries.items)),
-    )
+    return water_entries
 
 
 @water_entries_router.put(

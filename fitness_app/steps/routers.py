@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, status
 from fitness_app.auth.dependencies import AuthenticateUser, HasPermission
 from fitness_app.auth.permissions import Authenticated
 from fitness_app.core.dependencies import DbSession, StepsServiceDep
-from fitness_app.core.schemas import PageSchema
 from fitness_app.steps.schemas import StepsCreateSchema, StepsSchema
 
 steps_router = APIRouter(prefix="/steps", tags=["Шаги"])
@@ -14,7 +13,7 @@ steps_router = APIRouter(prefix="/steps", tags=["Шаги"])
 @steps_router.get(
     "",
     summary="Получить шаги за определенный период",
-    response_model=PageSchema,
+    response_model=list[StepsSchema],
     responses={
         status.HTTP_404_NOT_FOUND: {
             "description": "Шаги за этот период не были найдены"
@@ -28,12 +27,9 @@ async def get_steps_by_dates(
     user: AuthenticateUser,
     date_start: date,
     date_finish: date,
-) -> PageSchema:
+) -> list[StepsSchema]:
     steps = await service.get_by_dates(session, user.id, date_start, date_finish)
-    return PageSchema(
-        total_items_count=steps.total_items_count,
-        items=list(map(StepsSchema.model_validate, steps.items)),
-    )
+    return steps
 
 
 @steps_router.put(
