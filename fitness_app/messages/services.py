@@ -6,13 +6,10 @@ from fitness_app.chats.services import ChatService
 from fitness_app.core.exceptions import EntityNotFoundException, ForbiddenException
 from fitness_app.core.schemas import PageSchema
 from fitness_app.core.utils import update_model_by_schema
+from fitness_app.file_entities.services import FileEntityService
 from fitness_app.messages.models import Message
 from fitness_app.messages.repositories import MessageRepository
-from fitness_app.messages.schemas import (
-    MessageBaseSchema,
-    MessageCreateSchema,
-    MessageUpdateSchema,
-)
+from fitness_app.messages.schemas import MessageBaseSchema, MessageCreateSchema
 from fitness_app.users.models import User
 
 
@@ -21,9 +18,11 @@ class MessageService:
         self,
         message_repository: MessageRepository,
         chat_service: ChatService,
+        file_service: FileEntityService,
     ):
         self._message_repository = message_repository
         self._chat_service = chat_service
+        self._file_service = file_service
 
     async def get_mesage_by_id(
         self,
@@ -62,9 +61,19 @@ class MessageService:
         chat_id: int,
     ):
         chat = await self._chat_service.get_by_chat_id(session, user, chat_id)
-        create_schema_dict = create_schema.model_dump()
+        create_schema_dict = create_schema.model_dump(
+            exclude=["filenames", "voice_filename"]
+        )
         create_schema_dict["sender_id"] = user.id
         create_schema_dict["chat_id"] = chat_id
+        create_schema_dict["files_urls"] = []
+        for filename in create_schema.filenames:
+            file_url = await self._file_service.get_by_filename(session, filename)
+            create_schema_dict["files_urls"].append(file_url)
+        if create_schema.voice_filename:
+            create_schema_dict["voice_url"] = await self._file_service.get_by_filename(
+                session, create_schema.voice_filename
+            )
 
         messageSchema = MessageBaseSchema(**create_schema_dict)
         message = Message(**messageSchema.model_dump())
@@ -77,9 +86,10 @@ class MessageService:
         self,
         session: AsyncSession,
         user: User,
-        udate_schema: MessageUpdateSchema,
+        message_id: int,
+        udate_schema: MessageCreateSchema,
     ):
-        message = await session.get(Message, udate_schema.id)
+        message = await session.get(Message, message_id)
         if message is None:
             raise EntityNotFoundException("message with given id not found")
         chat_id = message.chat_id
@@ -90,7 +100,17 @@ class MessageService:
         )
         if message.sender_id != user.id:
             raise ForbiddenException("only sender can edit message")
-        udpate_schema_dict = udate_schema.model_dump()
+        udpate_schema_dict = udate_schema.model_dump(
+            exclude=["filenames", "voice_filename"]
+        )
+        udpate_schema_dict["files_urls"] = []
+        for filename in udate_schema.filenames:
+            file_url = await self._file_service.get_by_filename(session, filename)
+            udpate_schema_dict["files_urls"].append(file_url)
+        if udate_schema.voice_filename:
+            udpate_schema_dict["voice_url"] = await self._file_service.get_by_filename(
+                session, udate_schema.voice_filename
+            )
         udpate_schema_dict["timestamp"] = datetime.now(datetime.UTC)
 
         messageSchema = MessageBaseSchema(**udpate_schema_dict)

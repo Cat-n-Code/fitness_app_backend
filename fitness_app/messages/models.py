@@ -19,8 +19,8 @@ class Message(Base):
     timestamp: Mapped[datetime] = mapped_column(
         default=datetime.now, server_default=func.now()
     )
-    files: Mapped[list[str]] = mapped_column(ARRAY(Text))
-    voice: Mapped[Optional[str]] = mapped_column(nullable=True)
+    files_urls: Mapped[list[str]] = mapped_column(ARRAY(Text))
+    voice_url: Mapped[Optional[str]] = mapped_column(nullable=True)
 
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"))
     sender_id: Mapped[int] = mapped_column(ForeignKey("users.id"))

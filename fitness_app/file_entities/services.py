@@ -70,7 +70,7 @@ class FileEntityService:
 
         return await self._file_entity_repository.save(session, file_entity)
 
-    async def get_by_id(self, session: AsyncSession, id: int):
+    async def get_by_id(self, session: AsyncSession, id: int) -> FileEntity:
         file_entity = await self._file_entity_repository.get_by_id(session, id)
         if not file_entity:
             raise EntityNotFoundException("FileEntity with given id was not found")

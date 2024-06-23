@@ -175,7 +175,9 @@ def _setup_app_dependencies(app: FastAPI, settings: AppSettings):
     exercise_workout_service = ExerciseWorkoutService(
         workout_service, exercise_workout_repository, exercise_service
     )
-    message_service = MessageService(message_repository, chat_service)
+    message_service = MessageService(
+        message_repository, chat_service, file_entity_service
+    )
     steps_service = StepsService(steps_repository, settings.default_steps_goal)
     diary_service = DiaryService(diary_repository, file_entity_service)
     feedback_service = FeedbackService(
