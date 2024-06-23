@@ -1,13 +1,13 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from fitness_app.core.utils import NonEmptyStr
-
 
 class MessageCreateSchema(BaseModel):
-    content: NonEmptyStr
+    content: Optional[str] = None
     files: list[str] = []
+    voice: Optional[str] = None
 
 
 class MessageBaseSchema(MessageCreateSchema):
